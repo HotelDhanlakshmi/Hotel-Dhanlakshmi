@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* Marathi/Devanagari Font Support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Mukti:wght@400;700&display=swap');
+
+/* Maharashtrian Color Palette */
+:root {
+  --saffron: #FF9933;
+  --deep-saffron: #FF6600;
+  --marathi-orange: #FF8C00;
+  --traditional-red: #DC143C;
+  --golden-yellow: #FFD700;
+  --earth-brown: #8B4513;
+  --royal-purple: #663399;
+}
+
 /* Custom scrollbar styles */
 .scrollbar-hide {
   -ms-overflow-style: none;
@@ -19,6 +33,24 @@
   overflow: hidden;
 }
 
+/* Marathi Typography */
+.marathi-text {
+  font-family: 'Noto Sans Devanagari', 'Mukti', sans-serif;
+  font-weight: 500;
+}
+
+.marathi-heading {
+  font-family: 'Noto Sans Devanagari', 'Mukti', sans-serif;
+  font-weight: 700;
+}
+
+/* Traditional Maharashtrian Patterns */
+.maharashtrian-border {
+  border-image: linear-gradient(45deg, var(--saffron), var(--traditional-red), var(--golden-yellow)) 1;
+  border-width: 3px;
+  border-style: solid;
+}
+
 /* Custom animations */
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -29,12 +61,34 @@
   animation: float 3s ease-in-out infinite;
 }
 
+@keyframes pulse-saffron {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 153, 51, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255, 153, 51, 0); }
+}
+
+.animate-pulse-saffron {
+  animation: pulse-saffron 2s infinite;
+}
+
 /* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, #f97316, #dc2626);
+  background: linear-gradient(135deg, var(--saffron), var(--traditional-red));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+.maharashtrian-gradient {
+  background: linear-gradient(135deg, var(--saffron), var(--deep-saffron), var(--traditional-red));
+}
+
+/* Traditional Pattern Background */
+.traditional-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, var(--golden-yellow) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, var(--saffron) 2px, transparent 2px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
 }
 
 /* Custom button hover effects */
@@ -53,7 +107,7 @@
 /* Loading spinner */
 .spinner {
   border: 2px solid #f3f3f3;
-  border-top: 2px solid #f97316;
+  border-top: 2px solid var(--saffron);
   border-radius: 50%;
   width: 20px;
   height: 20px;
@@ -67,7 +121,11 @@
 
 /* Custom shadows */
 .shadow-glow {
-  box-shadow: 0 0 20px rgba(249, 115, 22, 0.3);
+  box-shadow: 0 0 20px rgba(255, 153, 51, 0.3);
+}
+
+.shadow-traditional {
+  box-shadow: 0 4px 15px rgba(255, 153, 51, 0.2), 0 2px 8px rgba(220, 20, 60, 0.1);
 }
 
 /* Responsive font sizes */
@@ -86,5 +144,28 @@
 /* Custom focus styles */
 .focus-ring:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 153, 51, 0.5);
+}
+
+/* Maharashtrian Card Styles */
+.maharashtrian-card {
+  background: linear-gradient(145deg, #ffffff, #fef7f0);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  position: relative;
+}
+
+.maharashtrian-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(45deg, var(--saffron), var(--traditional-red), var(--golden-yellow));
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  z-index: -1;
 }

@@ -22,12 +22,14 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-xl">🏨</span>
+            <div className="w-12 h-12 maharashtrian-gradient rounded-full flex items-center justify-center shadow-traditional animate-pulse-saffron">
+              <span className="text-white font-bold text-xl">🕉️</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-800">Hotel Dhanlakshmi</h1>
-              <p className="text-xs text-gray-500">Authentic Indian Cuisine</p>
+              <h1 className="text-xl font-bold text-gray-800">
+                <span className="marathi-heading text-orange-600">हॉटेल धनलक्ष्मी</span>
+              </h1>
+              <p className="text-xs text-gray-500 marathi-text">प्रामाणिक महाराष्ट्रीयन स्वाद</p>
             </div>
           </Link>
 
