@@ -1,0 +1,20 @@
+export const startersItems = [
+  { id: 's1', name: 'Roast Papad', price: 15, category: 'starters', type: 'veg', image: '/images/roast-papad.jpg' },
+  { id: 's2', name: 'Masala Papad', price: 35, category: 'starters', type: 'veg', image: '/images/masala-papad.jpg' },
+  { id: 's3', name: 'Nachani Roast', price: 20, category: 'starters', type: 'veg', image: '/images/nachani-roast.jpg' },
+  { id: 's4', name: 'Nachani Fry Papad', price: 30, category: 'starters', type: 'veg', image: '/images/nachani-fry-papad.jpg' },
+  { id: 's5', name: 'Papad Chutney', price: 80, category: 'starters', type: 'veg', image: '/images/papad-chutney.jpg' },
+  { id: 's6', name: 'Finger Chips', price: 99, category: 'starters', type: 'veg', image: '/images/finger-chips.jpg' },
+  { id: 's7', name: 'Cheese Corn Ball', price: 179, category: 'starters', type: 'veg', image: '/images/cheese-corn-ball.jpg' },
+  { id: 's8', name: 'Chana Fry', price: 119, category: 'starters', type: 'veg', image: '/images/chana-fry.jpg' },
+  { id: 's9', name: 'Soyabin Fry', price: 119, category: 'starters', type: 'veg', image: '/images/soyabin-fry.jpg' },
+  { id: 's10', name: 'Veg Salad', price: 49, category: 'starters', type: 'veg', image: '/images/veg-salad.jpg' },
+  { id: 's11', name: 'Veg Sandwich', price: 59, category: 'starters', type: 'veg', image: '/images/veg-sandwich.jpg' },
+  { id: 's12', name: 'Soyabin Roast', price: 120, category: 'starters', type: 'veg', image: '/images/soyabin-roast.jpg' },
+  { id: 's13', name: 'Chana Koliwada', price: 150, category: 'starters', type: 'veg', image: '/images/chana-koliwada.jpg' },
+  { id: 's14', name: 'Veg Pakoda', price: 140, category: 'starters', type: 'veg', image: '/images/veg-pakoda.jpg' },
+  { id: 's15', name: 'Paneer Pakoda', price: 199, category: 'starters', type: 'veg', image: '/images/paneer-pakoda.jpg' },
+  { id: 's16', name: 'Aloo Pakoda', price: 110, category: 'starters', type: 'veg', image: '/images/aloo-pakoda.jpg' },
+  { id: 's17', name: 'Onion Pakoda', price: 110, category: 'starters', type: 'veg', image: '/images/onion-pakoda.jpg' },
+  { id: 's18', name: 'Palak Pakoda', price: 130, category: 'starters', type: 'veg', image: '/images/palak-pakoda.jpg' }
+];

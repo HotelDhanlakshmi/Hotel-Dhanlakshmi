@@ -1,0 +1,21 @@
+export const riceRotiItems = [
+  { id: 'rr1', name: 'Tandoori Roti', price: 15, category: 'rice-roti', type: 'veg', image: '/images/tandoori-roti.jpg' },
+  { id: 'rr2', name: 'Chapati', price: 20, category: 'rice-roti', type: 'veg', image: '/images/chapati.jpg' },
+  { id: 'rr3', name: 'Bhakri', price: 20, category: 'rice-roti', type: 'veg', image: '/images/bhakri.jpg' },
+  { id: 'rr4', name: 'Garlic Butter Naan', price: 69, category: 'rice-roti', type: 'veg', image: '/images/garlic-butter-naan.jpg' },
+  { id: 'rr5', name: 'Butter Naan', price: 49, category: 'rice-roti', type: 'veg', image: '/images/butter-naan.jpg' },
+  { id: 'rr6', name: 'Butter Tandoori Roti', price: 25, category: 'rice-roti', type: 'veg', image: '/images/butter-tandoori-roti.jpg' },
+  { id: 'rr7', name: 'Butter Chapati', price: 25, category: 'rice-roti', type: 'veg', image: '/images/butter-chapati.jpg' },
+  { id: 'rr8', name: 'Kulcha', price: 29, category: 'rice-roti', type: 'veg', image: '/images/kulcha.jpg' },
+  { id: 'rr9', name: 'Laccha Paratha', price: 59, category: 'rice-roti', type: 'veg', image: '/images/laccha-paratha.jpg' },
+  { id: 'rr10', name: 'Paneer Stuffed Naan', price: 149, category: 'rice-roti', type: 'veg', image: '/images/paneer-stuffed-naan.jpg' },
+  { id: 'rr11', name: 'Steam Rice Full', price: 119, category: 'rice-roti', type: 'veg', image: '/images/steam-rice-full.jpg' },
+  { id: 'rr12', name: 'Steam Rice Half', price: 69, category: 'rice-roti', type: 'veg', image: '/images/steam-rice-half.jpg' },
+  { id: 'rr13', name: 'Lemon Rice', price: 149, category: 'rice-roti', type: 'veg', image: '/images/lemon-rice.jpg' },
+  { id: 'rr14', name: 'Jeera Rice Full', price: 129, category: 'rice-roti', type: 'veg', image: '/images/jeera-rice-full.jpg' },
+  { id: 'rr15', name: 'Jeera Rice Half', price: 79, category: 'rice-roti', type: 'veg', image: '/images/jeera-rice-half.jpg' },
+  { id: 'rr16', name: 'Curd Rice', price: 159, category: 'rice-roti', type: 'veg', image: '/images/curd-rice.jpg' },
+  { id: 'rr17', name: 'Veg Pulao', price: 189, category: 'rice-roti', type: 'veg', image: '/images/veg-pulao.jpg' },
+  { id: 'rr18', name: 'Mushroom Pulao', price: 219, category: 'rice-roti', type: 'veg', image: '/images/mushroom-pulao.jpg' },
+  { id: 'rr19', name: 'Kashmiri Pulao', price: 249, category: 'rice-roti', type: 'veg', image: '/images/kashmiri-pulao.jpg' }
+];
