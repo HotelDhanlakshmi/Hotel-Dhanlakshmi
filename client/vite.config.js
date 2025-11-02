@@ -7,4 +7,6 @@ export default defineConfig({
   plugins: [react(),
     tailwindcss()
   ],
+    base: './', // 👈 This line fixes white screen on Netlify
+
 })
