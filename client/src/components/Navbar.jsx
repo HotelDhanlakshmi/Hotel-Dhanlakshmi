@@ -21,9 +21,20 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-12 h-12 maharashtrian-gradient rounded-full flex items-center justify-center shadow-traditional animate-pulse-saffron">
-              <span className="text-white font-bold text-xl">🕉️</span>
+          <Link to="/" className="flex items-center space-x-3">
+            <div className="w-14 h-14 maharashtrian-gradient rounded-full flex items-center justify-center shadow-traditional hover:shadow-glow transition-all duration-300 p-1">
+              <img 
+                src="https://img.freepik.com/premium-vector/logo-steak-restaurant-with-fork-knife_1240970-33805.jpg?semt=ais_hybrid&w=740&q=80" 
+                alt="Hotel Dhanlakshmi Logo" 
+                className="w-full h-full object-cover rounded-full"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div className="w-full h-full bg-orange-600 rounded-full items-center justify-center text-white font-bold text-xl hidden">
+                🍽️
+              </div>
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-800">
