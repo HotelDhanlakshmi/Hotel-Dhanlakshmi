@@ -25,7 +25,7 @@ const Hero = () => {
           
           {/* Tagline */}
           <div className="marathi-text text-xl md:text-2xl mb-8 text-yellow-100 bg-black/20 backdrop-blur-sm rounded-lg px-6 py-3 inline-block shadow-traditional">
-            प्रामाणिक महाराष्ट्रीयन स्वाद • Authentic Maharashtrian Flavors
+            महाराष्ट्रीयन स्वाद • Authentic Maharashtrian Flavors
           </div>
           
           {/* Description */}
