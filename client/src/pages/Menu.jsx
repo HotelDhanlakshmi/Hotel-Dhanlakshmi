@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { categories, allMenuItems, getItemsByCategory } from '../data';
 import MenuCard from '../components/MenuCard';
 import CategoryFilter from '../components/CategoryFilter';
 
@@ -9,12 +8,36 @@ const Menu = () => {
   const { dispatch, isAuthenticated } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredItems, setFilteredItems] = useState(allMenuItems);
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [allMenuItems, setAllMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch menu data from API
+  useEffect(() => {
+    const fetchMenuData = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/menu');
+        if (response.ok) {
+          const menuData = await response.json();
+          setCategories(menuData.categories || []);
+          setAllMenuItems(menuData.items || []);
+          setFilteredItems(menuData.items || []);
+        }
+      } catch (error) {
+        console.error('Error fetching menu:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMenuData();
+  }, []);
 
   useEffect(() => {
     let items = selectedCategory === 'all' 
       ? allMenuItems 
-      : getItemsByCategory(selectedCategory);
+      : allMenuItems.filter(item => item.category === selectedCategory);
 
     if (searchQuery) {
       items = items.filter(item =>
@@ -23,7 +46,7 @@ const Menu = () => {
     }
 
     setFilteredItems(items);
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, allMenuItems]);
 
   const handleAddToCart = (item) => {
     dispatch({ type: 'ADD_TO_CART', payload: item });
@@ -111,14 +134,39 @@ const Menu = () => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItems.map((item) => (
-                <MenuCard 
-                  key={item.id} 
-                  item={item} 
-                  onAddToCart={handleAddToCart}
-                />
-              ))}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+              {loading ? (
+                <div className="text-center py-16">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading delicious menu items...</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredItems.map((item) => (
+                      <MenuCard
+                        key={item.id || item._id}
+                        item={item}
+                        onAddToCart={handleAddToCart}
+                        isAuthenticated={isAuthenticated}
+                      />
+                    ))}
+                  </div>
+
+                  {filteredItems.length === 0 && !loading && (
+                    <div className="text-center py-16">
+                      <div className="text-6xl mb-4">🔍</div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2">No items found</h3>
+                      <p className="text-gray-600">
+                        {searchQuery 
+                          ? `No items match "${searchQuery}". Try a different search term.`
+                          : 'No items available in this category.'
+                        }
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </>
         ) : (

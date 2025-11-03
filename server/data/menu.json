@@ -96,12 +96,12 @@
       "id": "pb1",
       "name": "Veg Cheese Pizza",
       "price": 169,
-      "category": "",
+      "category": "pizza-burger",
       "type": "veg",
       "image": "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop",
       "description": "",
       "available": true,
-      "updatedAt": "2025-11-03T16:21:09.695Z"
+      "updatedAt": "2025-11-03T16:36:30.836Z"
     },
     {
       "id": "pb2",
