@@ -7,8 +7,16 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
 const path = require('path');
 const cron = require('node-cron');
+const mongoose = require('mongoose');
 const whatsappService = require('./services/whatsappService');
+const connectDB = require('./config/database');
+const User = require('./models/User');
+const Order = require('./models/Order');
+
 require('dotenv').config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -108,6 +116,14 @@ function isValidMobile(mobile) {
 async function isBlacklisted(mobile) {
   const blacklist = await readJsonFile(BLACKLIST_FILE) || [];
   return blacklist.includes(mobile);
+}
+
+// Admin mobile numbers (in production, store in database)
+const ADMIN_MOBILES = ['9876543210', '8765432109']; // Add your admin numbers
+
+// Check if mobile is admin
+function isAdminMobile(mobile) {
+  return ADMIN_MOBILES.includes(mobile);
 }
 
 // API Routes
@@ -227,9 +243,11 @@ app.post('/api/verify-otp', async (req, res) => {
 app.post('/api/orders', async (req, res) => {
   try {
     const { mobile, items, total, address } = req.body;
+    console.log('Order creation request:', { mobile, items: items?.length, total, address });
 
     // Validation
     if (!mobile || !isValidMobile(mobile)) {
+      console.log('Invalid mobile:', mobile);
       return res.status(400).json({ error: 'Invalid mobile number' });
     }
 
@@ -238,47 +256,104 @@ app.post('/api/orders', async (req, res) => {
     }
 
     if (!items || !Array.isArray(items) || items.length === 0) {
+      console.log('Invalid items:', items);
       return res.status(400).json({ error: 'Invalid items' });
     }
 
     if (!total || total < 200) {
+      console.log('Invalid total:', total);
       return res.status(400).json({ error: 'Minimum order amount is ₹200' });
     }
 
     if (total > 2000) {
+      console.log('Total too high:', total);
       return res.status(400).json({ error: 'Maximum COD limit is ₹2000' });
     }
 
     if (!address || !address.name || !address.street || !address.city || !address.pincode) {
+      console.log('Invalid address:', address);
       return res.status(400).json({ error: 'Complete address is required' });
     }
 
     // Check daily order limit
-    const orders = await readJsonFile(ORDERS_FILE) || [];
-    const today = new Date().toDateString();
-    const todayOrders = orders.filter(order => 
-      order.mobile === mobile && 
-      new Date(order.timestamp).toDateString() === today
-    );
+    let todayOrders = [];
+    if (mongoose.connection.readyState === 1) {
+      // MongoDB is connected
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      todayOrders = await Order.find({
+        mobile,
+        createdAt: { $gte: today, $lt: tomorrow }
+      });
+    } else {
+      // Fallback to file storage
+      const orders = await readJsonFile(ORDERS_FILE) || [];
+      const todayStr = new Date().toDateString();
+      todayOrders = orders.filter(order => 
+        order.mobile === mobile && 
+        new Date(order.timestamp).toDateString() === todayStr
+      );
+    }
 
     if (todayOrders.length >= 3) {
       return res.status(400).json({ error: 'Daily order limit exceeded (3 orders per day)' });
     }
 
-    // Create order
-    const order = {
-      id: `ORD${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      mobile,
-      items,
-      total,
-      address,
-      status: 'confirmed',
-      timestamp: new Date().toISOString(),
-      estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000).toISOString()
-    };
+    // Create order ID
+    const orderId = `ORD${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
-    orders.push(order);
-    await writeJsonFile(ORDERS_FILE, orders);
+    let order;
+    if (mongoose.connection.readyState === 1) {
+      // Save to MongoDB
+      order = await Order.create({
+        orderId,
+        mobile,
+        customerName: address.name,
+        items,
+        total,
+        address,
+        estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000)
+      });
+      
+      // Also save/update user info
+      await User.findOneAndUpdate(
+        { mobile },
+        {
+          mobile,
+          name: address.name,
+          address: {
+            street: address.street,
+            city: address.city,
+            state: address.state || 'Maharashtra',
+            pincode: address.pincode
+          },
+          isVerified: true,
+          verifiedAt: new Date(),
+          lastLoginAt: new Date()
+        },
+        { upsert: true, new: true }
+      );
+      
+    } else {
+      // Fallback to file storage
+      order = {
+        id: orderId,
+        mobile,
+        items,
+        total,
+        address,
+        status: 'confirmed',
+        timestamp: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000).toISOString()
+      };
+
+      const orders = await readJsonFile(ORDERS_FILE) || [];
+      orders.push(order);
+      await writeJsonFile(ORDERS_FILE, orders);
+    }
 
     // Send WhatsApp order confirmation
     try {
@@ -294,7 +369,10 @@ app.post('/api/orders', async (req, res) => {
     res.status(201).json({ 
       success: true, 
       message: 'Order created successfully',
-      data: order
+      data: {
+        id: order.orderId || order.id,
+        ...order
+      }
     });
   } catch (error) {
     console.error('Error creating order:', error);
@@ -331,17 +409,146 @@ app.get('/api/orders/mobile/:mobile', async (req, res) => {
   try {
     const { mobile } = req.params;
 
-    if (!isValidMobile(mobile)) {
+    if (!mobile || !isValidMobile(mobile)) {
       return res.status(400).json({ error: 'Invalid mobile number' });
     }
 
-    const orders = await readJsonFile(ORDERS_FILE) || [];
-    const userOrders = orders.filter(o => o.mobile === mobile);
+    let userOrders = [];
+    
+    if (mongoose.connection.readyState === 1) {
+      // MongoDB is connected
+      userOrders = await Order.find({ mobile })
+        .sort({ createdAt: -1 }) // Most recent first
+        .lean();
+      
+      // Convert MongoDB format to frontend format
+      userOrders = userOrders.map(order => ({
+        id: order.orderId,
+        orderId: order.orderId,
+        mobile: order.mobile,
+        items: order.items,
+        total: order.total,
+        address: order.address,
+        status: order.status,
+        timestamp: order.createdAt,
+        createdAt: order.createdAt,
+        estimatedDelivery: order.estimatedDelivery
+      }));
+    } else {
+      // Fallback to file storage
+      const orders = await readJsonFile(ORDERS_FILE) || [];
+      userOrders = orders.filter(o => o.mobile === mobile);
+    }
 
     res.json({ success: true, data: userOrders });
   } catch (error) {
     console.error('Error fetching orders:', error);
     res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+});
+
+// Admin OTP endpoints
+app.post('/api/admin/send-otp', otpLimiter, async (req, res) => {
+  try {
+    const { mobile } = req.body;
+
+    if (!mobile || !isValidMobile(mobile)) {
+      return res.status(400).json({ error: 'Invalid mobile number' });
+    }
+
+    if (!isAdminMobile(mobile)) {
+      return res.status(403).json({ error: 'Not authorized as admin' });
+    }
+
+    const otp = generateOTP();
+    const otpData = await readJsonFile(OTP_FILE) || {};
+    
+    otpData[`admin_${mobile}`] = {
+      otp,
+      timestamp: Date.now(),
+      attempts: 0,
+      isAdmin: true
+    };
+
+    await writeJsonFile(OTP_FILE, otpData);
+
+    // Send OTP via WhatsApp for admin
+    try {
+      if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.NODE_ENV === 'production') {
+        await whatsappService.sendOTP(mobile, otp);
+        console.log(`Admin WhatsApp OTP sent to ${mobile}`);
+      } else {
+        console.log(`🔐 Admin OTP for ${mobile}: ${otp}`);
+      }
+    } catch (whatsappError) {
+      console.error('Admin WhatsApp send failed:', whatsappError.message);
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Admin OTP sent successfully',
+      otp: process.env.NODE_ENV === 'development' ? otp : undefined
+    });
+  } catch (error) {
+    console.error('Error sending admin OTP:', error);
+    res.status(500).json({ error: 'Failed to send admin OTP' });
+  }
+});
+
+app.post('/api/admin/verify-otp', async (req, res) => {
+  try {
+    const { mobile, otp } = req.body;
+
+    if (!mobile || !otp || !isValidMobile(mobile)) {
+      return res.status(400).json({ error: 'Invalid mobile number or OTP' });
+    }
+
+    if (!isAdminMobile(mobile)) {
+      return res.status(403).json({ error: 'Not authorized as admin' });
+    }
+
+    const otpData = await readJsonFile(OTP_FILE) || {};
+    const storedOtpData = otpData[`admin_${mobile}`];
+
+    if (!storedOtpData || !storedOtpData.isAdmin) {
+      return res.status(400).json({ error: 'Admin OTP not found or expired' });
+    }
+
+    // Check if OTP is expired (5 minutes)
+    if (Date.now() - storedOtpData.timestamp > 5 * 60 * 1000) {
+      delete otpData[`admin_${mobile}`];
+      await writeJsonFile(OTP_FILE, otpData);
+      return res.status(400).json({ error: 'OTP expired' });
+    }
+
+    // Check attempts
+    if (storedOtpData.attempts >= 3) {
+      delete otpData[`admin_${mobile}`];
+      await writeJsonFile(OTP_FILE, otpData);
+      return res.status(400).json({ error: 'Too many attempts' });
+    }
+
+    if (storedOtpData.otp !== otp) {
+      storedOtpData.attempts++;
+      await writeJsonFile(OTP_FILE, otpData);
+      return res.status(400).json({ error: 'Invalid OTP' });
+    }
+
+    // OTP verified successfully - generate admin token
+    delete otpData[`admin_${mobile}`];
+    await writeJsonFile(OTP_FILE, otpData);
+
+    const adminToken = `admin_${mobile}_${Date.now()}`;
+
+    res.json({ 
+      success: true, 
+      message: 'Admin OTP verified successfully',
+      token: adminToken,
+      mobile: mobile
+    });
+  } catch (error) {
+    console.error('Error verifying admin OTP:', error);
+    res.status(500).json({ error: 'Failed to verify admin OTP' });
   }
 });
 
@@ -357,7 +564,32 @@ const adminAuth = (req, res, next) => {
 // Get all orders (admin)
 app.get('/api/admin/orders', adminAuth, async (req, res) => {
   try {
-    const orders = await readJsonFile(ORDERS_FILE) || [];
+    let orders = [];
+    
+    if (mongoose.connection.readyState === 1) {
+      // MongoDB is connected
+      orders = await Order.find({})
+        .sort({ createdAt: -1 }) // Most recent first
+        .lean();
+      
+      // Convert MongoDB format to frontend format
+      orders = orders.map(order => ({
+        id: order.orderId,
+        orderId: order.orderId,
+        mobile: order.mobile,
+        items: order.items,
+        total: order.total,
+        address: order.address,
+        status: order.status,
+        timestamp: order.createdAt,
+        createdAt: order.createdAt,
+        estimatedDelivery: order.estimatedDelivery
+      }));
+    } else {
+      // Fallback to file storage
+      orders = await readJsonFile(ORDERS_FILE) || [];
+    }
+    
     res.json({ success: true, data: orders });
   } catch (error) {
     console.error('Error fetching admin orders:', error);
