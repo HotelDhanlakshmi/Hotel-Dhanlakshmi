@@ -7,6 +7,13 @@ import { riceRotiItems } from './riceRoti.js';
 import { parathaItems } from './paratha.js';
 import { startersItems } from './starters.js';
 import { biryaniItems } from './biryani.js';
+import { chineseVegItems } from './chineseVeg.js';
+import { chineseNonVegItems } from './chineseNonVeg.js';
+import { vegMainCourseItems } from './vegMainCourse.js';
+import { tandooriKababItems } from './tandooriKabab.js';
+import { spThaliItems } from './spThali.js';
+import { beveragesItems } from './beverages.js';
+import { soupsItems } from './soups.js';
 
 // Combine all menu items
 export const allMenuItems = [
@@ -17,7 +24,14 @@ export const allMenuItems = [
   ...riceRotiItems,
   ...parathaItems,
   ...startersItems,
-  ...biryaniItems
+  ...biryaniItems,
+  ...chineseVegItems,
+  ...chineseNonVegItems,
+  ...vegMainCourseItems,
+  ...tandooriKababItems,
+  ...spThaliItems,
+  ...beveragesItems,
+  ...soupsItems
 ];
 
 export { categories };

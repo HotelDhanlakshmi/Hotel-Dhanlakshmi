@@ -723,13 +723,21 @@ const AdminDashboard = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select Category</option>
-                      <option value="appetizers">Appetizers</option>
-                      <option value="main-course">Main Course</option>
-                      <option value="rice-dishes">Rice Dishes</option>
-                      <option value="breads">Breads</option>
-                      <option value="desserts">Desserts</option>
-                      <option value="beverages">Beverages</option>
-                      <option value="snacks">Snacks</option>
+                      <option value="pizza-burger">🍕 Pizza/Burger</option>
+                      <option value="chicken">🍗 Chicken</option>
+                      <option value="mutton">🐑 Mutton</option>
+                      <option value="fish">🐟 Fish</option>
+                      <option value="rice-roti">🍚 Rice/Roti</option>
+                      <option value="paratha">🫓 Paratha</option>
+                      <option value="starters">🥗 Starters</option>
+                      <option value="biryani">🍛 Biryani</option>
+                      <option value="chinese-veg">🥢 Chinese-Veg</option>
+                      <option value="chinese-non-veg">🥡 Chinese Non-Veg</option>
+                      <option value="veg-main-course">🥘 Veg-Main Course</option>
+                      <option value="tandoori-kabab">🔥 Tandoori/Kabab</option>
+                      <option value="sp-thali">🍽️ Sp.Thali</option>
+                      <option value="beverages">🥤 Beverages</option>
+                      <option value="soups">🍲 Soups</option>
                     </select>
                   </div>
 

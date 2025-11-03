@@ -628,6 +628,16 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Type must be veg, non-veg, or egg' });
     }
 
+    const validCategories = [
+      'pizza-burger', 'chicken', 'mutton', 'fish', 'rice-roti', 'paratha',
+      'starters', 'biryani', 'chinese-veg', 'chinese-non-veg', 'veg-main-course',
+      'tandoori-kabab', 'sp-thali', 'beverages', 'soups'
+    ];
+    
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+
     const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
     
     const newProduct = {
@@ -664,8 +674,8 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
     const { name, description, price, category, type, image, available } = req.body;
     
     // Validation
-    if (!name || !price || !type) {
-      return res.status(400).json({ error: 'Name, price, and type are required' });
+    if (!name || !price || !type || !category) {
+      return res.status(400).json({ error: 'Name, price, type, and category are required' });
     }
 
     if (price < 0) {
@@ -674,6 +684,16 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
 
     if (!['veg', 'non-veg', 'egg'].includes(type)) {
       return res.status(400).json({ error: 'Type must be veg, non-veg, or egg' });
+    }
+
+    const validCategories = [
+      'pizza-burger', 'chicken', 'mutton', 'fish', 'rice-roti', 'paratha',
+      'starters', 'biryani', 'chinese-veg', 'chinese-non-veg', 'veg-main-course',
+      'tandoori-kabab', 'sp-thali', 'beverages', 'soups'
+    ];
+    
+    if (category && !validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category' });
     }
 
     const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
