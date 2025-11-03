@@ -5,6 +5,21 @@ import { useApp } from '../context/AppContext';
 const Checkout = () => {
   const { cart, dispatch } = useApp();
   const navigate = useNavigate();
+  
+  // Debug: Log cart state
+  console.log('Checkout - Cart state:', cart);
+  
+  // Add loading state for debugging
+  if (!cart) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <h2 className="text-xl font-bold text-gray-800">Loading...</h2>
+        </div>
+      </div>
+    );
+  }
   const [mobile, setMobile] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState({
     name: '',
@@ -15,6 +30,8 @@ const Checkout = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [deliveryInstructions, setDeliveryInstructions] = useState('');
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryFee = 0; // Free delivery
@@ -93,11 +110,22 @@ const Checkout = () => {
           <div className="text-6xl mb-4">🛒</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Cart is Empty</h2>
           <p className="text-gray-600 mb-8">Add some delicious items to your cart before checkout.</p>
+          <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 mb-4">
+            <p className="text-yellow-800 text-sm">
+              <strong>Debug Info:</strong> Cart items: {JSON.stringify(cart)}
+            </p>
+          </div>
           <button
-            onClick={() => navigate('/')}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            onClick={() => navigate('/menu')}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors mr-4"
           >
             Browse Menu
+          </button>
+          <button
+            onClick={() => navigate('/cart')}
+            className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+          >
+            Back to Cart
           </button>
         </div>
       </div>

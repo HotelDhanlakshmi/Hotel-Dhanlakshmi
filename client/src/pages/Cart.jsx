@@ -3,6 +3,9 @@ import { useApp } from '../context/AppContext';
 
 const Cart = () => {
   const { cart, dispatch } = useApp();
+  
+  // Debug: Log cart state
+  console.log('Cart - Cart state:', cart);
 
   const updateQuantity = (itemId, newQuantity) => {
     dispatch({

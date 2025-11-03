@@ -9,6 +9,7 @@ import OrderTracking from './pages/OrderTracking';
 import TrackOrder from './pages/TrackOrder';
 import UnderProgress from './components/UnderProgress';
 import OtpModal from './components/OtpModal';
+import Debug from './pages/Debug';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/track-order/:orderId" element={<OrderTracking />} />
             <Route path="/track-order" element={<TrackOrder />} />
+            <Route path="/debug" element={<Debug />} />
             <Route path="/about" element={<UnderProgress pageName="About Us" />} />
             <Route path="/contact" element={<UnderProgress pageName="Contact Us" />} />
           </Routes>

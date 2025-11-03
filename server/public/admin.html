@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Dhanlakshmi - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .marathi-text { font-family: 'Noto Sans Devanagari', sans-serif; }
+        .maharashtrian-gradient { background: linear-gradient(135deg, #FF9933, #FF6600, #DC143C); }
+        .shadow-traditional { box-shadow: 0 4px 6px -1px rgba(255, 153, 51, 0.1), 0 2px 4px -1px rgba(255, 153, 51, 0.06); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="maharashtrian-gradient text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">हॉटेल धनलक्ष्मी</h1>
+                    <p class="text-orange-100">Admin Dashboard • प्रशासन डॅशबोर्ड</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="refreshData()" class="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-all">
+                        🔄 Refresh
+                    </button>
+                    <div class="text-right">
+                        <div class="text-sm opacity-90">Last Updated</div>
+                        <div id="lastUpdated" class="text-xs">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-traditional p-6">
+                <div class="flex items-center">
+                    <div class="text-3xl mr-4">📋</div>
+                    <div>
+                        <div class="text-2xl font-bold text-gray-800" id="totalOrders">0</div>
+                        <div class="text-gray-600">Total Orders</div>
+                        <div class="marathi-text text-xs text-gray-500">एकूण ऑर्डर</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-traditional p-6">
+                <div class="flex items-center">
+                    <div class="text-3xl mr-4">⏳</div>
+                    <div>
+                        <div class="text-2xl font-bold text-orange-600" id="pendingOrders">0</div>
+                        <div class="text-gray-600">Pending Orders</div>
+                        <div class="marathi-text text-xs text-gray-500">प्रलंबित ऑर्डर</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-traditional p-6">
+                <div class="flex items-center">
+                    <div class="text-3xl mr-4">💰</div>
+                    <div>
+                        <div class="text-2xl font-bold text-green-600" id="todayRevenue">₹0</div>
+                        <div class="text-gray-600">Today's Revenue</div>
+                        <div class="marathi-text text-xs text-gray-500">आजचे उत्पन्न</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-traditional p-6">
+                <div class="flex items-center">
+                    <div class="text-3xl mr-4">✅</div>
+                    <div>
+                        <div class="text-2xl font-bold text-blue-600" id="completedOrders">0</div>
+                        <div class="text-gray-600">Completed Today</div>
+                        <div class="marathi-text text-xs text-gray-500">आज पूर्ण झाले</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Key Input -->
+        <div class="bg-white rounded-lg shadow-traditional p-6 mb-8">
+            <h3 class="text-lg font-semibold mb-4">🔑 Admin Authentication</h3>
+            <div class="flex gap-4">
+                <input 
+                    type="password" 
+                    id="apiKey" 
+                    placeholder="Enter Admin API Key"
+                    class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                >
+                <button 
+                    onclick="setApiKey()" 
+                    class="maharashtrian-gradient text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all"
+                >
+                    Set Key
+                </button>
+            </div>
+        </div>
+
+        <!-- Orders Table -->
+        <div class="bg-white rounded-lg shadow-traditional overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">📋 Recent Orders • अलीकडील ऑर्डर</h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                                Please set API key to load orders
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let apiKey = '';
+        let orders = [];
+
+        function setApiKey() {
+            apiKey = document.getElementById('apiKey').value;
+            if (apiKey) {
+                refreshData();
+                document.getElementById('apiKey').value = '';
+            }
+        }
+
+        async function refreshData() {
+            if (!apiKey) {
+                alert('Please set API key first');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/admin/orders', {
+                    headers: {
+                        'X-API-Key': apiKey
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    orders = data.data;
+                    updateStats();
+                    updateOrdersTable();
+                    document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+                } else {
+                    alert('Failed to fetch orders. Check API key.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error fetching data');
+            }
+        }
+
+        function updateStats() {
+            const today = new Date().toDateString();
+            const todayOrders = orders.filter(order => 
+                new Date(order.timestamp).toDateString() === today
+            );
+
+            document.getElementById('totalOrders').textContent = orders.length;
+            document.getElementById('pendingOrders').textContent = orders.filter(o => 
+                !['delivered', 'cancelled'].includes(o.status)
+            ).length;
+            document.getElementById('todayRevenue').textContent = '₹' + todayOrders.reduce((sum, order) => sum + order.total, 0);
+            document.getElementById('completedOrders').textContent = todayOrders.filter(o => 
+                o.status === 'delivered'
+            ).length;
+        }
+
+        function updateOrdersTable() {
+            const tbody = document.getElementById('ordersTableBody');
+            tbody.innerHTML = '';
+
+            if (orders.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="px-6 py-4 text-center text-gray-500">No orders found</td></tr>';
+                return;
+            }
+
+            orders.slice(0, 20).forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${order.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${order.mobile}</td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${order.items.length} items</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">₹${order.total}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <select onchange="updateOrderStatus('${order.id}', this.value)" class="text-sm border border-gray-300 rounded px-2 py-1 ${getStatusColor(order.status)}">
+                            <option value="confirmed" ${order.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                            <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>Preparing</option>
+                            <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>Ready</option>
+                            <option value="out-for-delivery" ${order.status === 'out-for-delivery' ? 'selected' : ''}>Out for Delivery</option>
+                            <option value="delivered" ${order.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(order.timestamp).toLocaleString()}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button onclick="viewOrderDetails('${order.id}')" class="text-blue-600 hover:text-blue-900">View</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'confirmed': 'text-blue-600',
+                'preparing': 'text-yellow-600',
+                'ready': 'text-purple-600',
+                'out-for-delivery': 'text-orange-600',
+                'delivered': 'text-green-600'
+            };
+            return colors[status] || 'text-gray-600';
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            if (!apiKey) {
+                alert('API key not set');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/orders/${orderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.ok) {
+                    refreshData();
+                } else {
+                    alert('Failed to update order status');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error updating order status');
+            }
+        }
+
+        function viewOrderDetails(orderId) {
+            const order = orders.find(o => o.id === orderId);
+            if (order) {
+                alert(`Order Details:\n\nID: ${order.id}\nMobile: ${order.mobile}\nTotal: ₹${order.total}\nStatus: ${order.status}\nAddress: ${order.address.name}, ${order.address.street}, ${order.address.city}\n\nItems:\n${order.items.map(item => `- ${item.name} (₹${item.price} x ${item.quantity})`).join('\n')}`);
+            }
+        }
+
+        // Auto refresh every 30 seconds
+        setInterval(() => {
+            if (apiKey) {
+                refreshData();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
