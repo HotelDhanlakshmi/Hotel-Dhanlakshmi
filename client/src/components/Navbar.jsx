@@ -3,18 +3,10 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const Navbar = () => {
-  const { cart, isAuthenticated, user, dispatch } = useApp();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { cart } = useApp();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
-
-  const handleAuthClick = () => {
-    if (isAuthenticated) {
-      dispatch({ type: 'LOGOUT' });
-    } else {
-      dispatch({ type: 'SHOW_AUTH_MODAL', payload: 'login' });
-    }
-  };
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -74,40 +66,14 @@ const Navbar = () => {
               )}
             </Link>
 
-            {/* User Menu */}
-            <div className="flex items-center space-x-2">
-              {isAuthenticated ? (
-                <div className="flex items-center space-x-2">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
-                      {user?.name?.charAt(0).toUpperCase() || 'U'}
-                    </span>
-                  </div>
-                  <span className="text-gray-700 text-sm font-medium hidden sm:block">
-                    {user?.name || 'User'}
-                  </span>
-                  <button
-                    onClick={handleAuthClick}
-                    className="text-gray-500 hover:text-red-500 transition-colors"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handleAuthClick}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  Login
-                </button>
-              )}
-            </div>
+            {/* Order Tracking */}
+            <Link to="/track-order" className="hidden sm:block bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+              Track Order
+            </Link>
 
             {/* Mobile Menu Button */}
             <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 text-gray-700 hover:text-orange-500"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -118,7 +84,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && (
+        {isMobileMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-2">
               <Link to="/" className="text-gray-700 hover:text-orange-500 font-medium py-2 transition-colors">
@@ -132,6 +98,9 @@ const Navbar = () => {
               </Link>
               <Link to="/contact" className="text-gray-700 hover:text-orange-500 font-medium py-2 transition-colors">
                 Contact
+              </Link>
+              <Link to="/track-order" className="text-gray-700 hover:text-orange-500 font-medium py-2 transition-colors">
+                Track Order
               </Link>
             </div>
           </div>

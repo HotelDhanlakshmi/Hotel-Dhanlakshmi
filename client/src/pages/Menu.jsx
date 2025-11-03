@@ -25,10 +25,6 @@ const Menu = () => {
   }, [selectedCategory, searchQuery]);
 
   const handleAddToCart = (item) => {
-    if (!isAuthenticated) {
-      dispatch({ type: 'SHOW_AUTH_MODAL', payload: 'login' });
-      return;
-    }
     dispatch({ type: 'ADD_TO_CART', payload: item });
   };
 

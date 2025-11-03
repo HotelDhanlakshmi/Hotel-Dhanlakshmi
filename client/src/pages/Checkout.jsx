@@ -3,45 +3,87 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const Checkout = () => {
-  const { cart, user, dispatch } = useApp();
+  const { cart, dispatch } = useApp();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [deliveryInstructions, setDeliveryInstructions] = useState('');
-  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [mobile, setMobile] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState({
+    name: '',
+    street: '',
+    city: '',
+    state: 'Maharashtra',
+    pincode: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const deliveryFee = 0; // Free delivery
+  const taxes = Math.round(subtotal * 0.05); // 5% tax
+  const total = subtotal + deliveryFee + taxes;
+
+  // Fraud prevention checks
+  const isValidOrder = () => {
+    const newErrors = {};
+
+    // Mobile validation
+    if (!mobile || !/^[6-9]\d{9}$/.test(mobile)) {
+      newErrors.mobile = 'कृपया वैध मोबाईल नंबर टाका • Please enter valid mobile number';
+    }
+
+    // Minimum order amount
+    if (total < 200) {
+      newErrors.amount = 'किमान ऑर्डर ₹200 • Minimum order amount ₹200';
+    }
+
+    // Maximum COD limit
+    if (total > 2000) {
+      newErrors.amount = 'COD मर्यादा ₹2000 • COD limit ₹2000';
+    }
+
+    // Address validation
+    if (!deliveryAddress.name.trim()) {
+      newErrors.name = 'नाव आवश्यक • Name required';
+    }
+    if (!deliveryAddress.street.trim()) {
+      newErrors.street = 'पत्ता आवश्यक • Address required';
+    }
+    if (!deliveryAddress.city.trim()) {
+      newErrors.city = 'शहर आवश्यक • City required';
+    }
+    if (!deliveryAddress.pincode || !/^\d{6}$/.test(deliveryAddress.pincode)) {
+      newErrors.pincode = 'वैध पिनकोड टाका • Enter valid pincode';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
-
-  const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
-  const finalTotal = getTotalPrice() + Math.round(getTotalPrice() * 0.05);
 
   const handlePlaceOrder = async () => {
-    setIsPlacingOrder(true);
-    
-    // Simulate order placement
-    setTimeout(() => {
-      const orderId = 'ORD' + Date.now();
-      const newOrder = {
-        id: orderId,
-        items: [...cart],
-        total: finalTotal,
-        status: 'confirmed',
-        paymentMethod,
-        deliveryInstructions,
-        customerInfo: user,
-        orderTime: new Date().toISOString(),
-        estimatedDelivery: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // 30 minutes
-        deliveryBoy: null
-      };
+    if (!isValidOrder()) return;
 
-      dispatch({ type: 'ADD_ORDER', payload: newOrder });
-      setIsPlacingOrder(false);
-      navigate(`/track-order/${orderId}`);
-    }, 2000);
+    setIsLoading(true);
+
+    try {
+      // Simulate sending OTP
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Show OTP modal
+      dispatch({
+        type: 'SHOW_OTP_MODAL',
+        payload: {
+          mobile,
+          orderData: {
+            items: cart,
+            total,
+            address: deliveryAddress
+          }
+        }
+      });
+    } catch (error) {
+      alert('Failed to send OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (cart.length === 0) {
@@ -70,26 +112,120 @@ const Checkout = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Left Column - Order Details & Payment */}
+        {/* Left Column - Customer Details & Address */}
         <div className="space-y-6">
+          {/* Mobile Number */}
+          <div className="maharashtrian-card rounded-lg shadow-traditional p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              📱 Mobile Number • मोबाईल नंबर
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <input
+                  type="tel"
+                  placeholder="Enter mobile number • मोबाईल नंबर टाका"
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                    errors.mobile ? 'border-red-500' : 'border-orange-200'
+                  }`}
+                  maxLength="10"
+                />
+                {errors.mobile && (
+                  <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+                )}
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-start space-x-2">
+                  <span className="text-blue-600 text-sm">ℹ️</span>
+                  <div className="text-xs text-blue-700">
+                    <div className="font-medium">OTP Verification Required • OTP सत्यापन आवश्यक</div>
+                    <div className="mt-1">
+                      We'll send a 6-digit OTP to verify your order • आम्ही तुमच्या ऑर्डरची पुष्टी करण्यासाठी 6 अंकी OTP पाठवू
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Delivery Address */}
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Delivery Address</h3>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex items-start space-x-3">
-                <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold">
-                    {user?.name?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+          <div className="maharashtrian-card rounded-lg shadow-traditional p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              🏠 Delivery Address • डिलिव्हरी पत्ता
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Full Name • पूर्ण नाव"
+                  value={deliveryAddress.name}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, name: e.target.value})}
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                    errors.name ? 'border-red-500' : 'border-orange-200'
+                  }`}
+                />
+                {errors.name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                )}
+              </div>
+              
+              <div>
+                <textarea
+                  placeholder="Street Address • रस्त्याचा पत्ता"
+                  value={deliveryAddress.street}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, street: e.target.value})}
+                  rows="3"
+                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                    errors.street ? 'border-red-500' : 'border-orange-200'
+                  }`}
+                />
+                {errors.street && (
+                  <p className="text-red-500 text-sm mt-1">{errors.street}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="font-semibold text-gray-800">{user?.name}</p>
-                  <p className="text-gray-600">{user?.phone}</p>
-                  <p className="text-gray-600 mt-1">
-                    {user?.address?.street}, {user?.address?.city}<br />
-                    {user?.address?.state} - {user?.address?.pincode}
-                  </p>
+                  <input
+                    type="text"
+                    placeholder="City • शहर"
+                    value={deliveryAddress.city}
+                    onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                      errors.city ? 'border-red-500' : 'border-orange-200'
+                    }`}
+                  />
+                  {errors.city && (
+                    <p className="text-red-500 text-sm mt-1">{errors.city}</p>
+                  )}
                 </div>
+                
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Pincode • पिनकोड"
+                    value={deliveryAddress.pincode}
+                    onChange={(e) => setDeliveryAddress({...deliveryAddress, pincode: e.target.value.replace(/\D/g, '').slice(0, 6)})}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                      errors.pincode ? 'border-red-500' : 'border-orange-200'
+                    }`}
+                    maxLength="6"
+                  />
+                  {errors.pincode && (
+                    <p className="text-red-500 text-sm mt-1">{errors.pincode}</p>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <select
+                  value={deliveryAddress.state}
+                  onChange={(e) => setDeliveryAddress({...deliveryAddress, state: e.target.value})}
+                  className="w-full px-4 py-3 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all"
+                >
+                  <option value="Maharashtra">Maharashtra • महाराष्ट्र</option>
+                </select>
               </div>
             </div>
           </div>

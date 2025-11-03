@@ -6,8 +6,9 @@ import Menu from './pages/Menu';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import OrderTracking from './pages/OrderTracking';
+import TrackOrder from './pages/TrackOrder';
 import UnderProgress from './components/UnderProgress';
-import AuthModal from './components/AuthModal';
+import OtpModal from './components/OtpModal';
 
 function App() {
   return (
@@ -21,10 +22,11 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/track-order/:orderId" element={<OrderTracking />} />
+            <Route path="/track-order" element={<TrackOrder />} />
             <Route path="/about" element={<UnderProgress pageName="About Us" />} />
             <Route path="/contact" element={<UnderProgress pageName="Contact Us" />} />
           </Routes>
-          <AuthModal />
+          <OtpModal />
         </div>
       </Router>
     </AppProvider>

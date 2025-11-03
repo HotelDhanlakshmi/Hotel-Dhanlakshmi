@@ -3,32 +3,20 @@ import { createContext, useContext, useReducer } from 'react';
 const AppContext = createContext();
 
 const initialState = {
-  user: null,
-  isAuthenticated: false,
   cart: [],
-  orders: [],
+  showOtpModal: false,
   currentOrder: null,
-  showAuthModal: false,
-  authMode: 'login' // 'login' or 'signup'
+  orders: [],
+  otpData: {
+    mobile: '',
+    otp: '',
+    isVerified: false,
+    orderData: null
+  }
 };
 
 const appReducer = (state, action) => {
   switch (action.type) {
-    case 'SET_USER':
-      return {
-        ...state,
-        user: action.payload,
-        isAuthenticated: !!action.payload
-      };
-    
-    case 'LOGOUT':
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        cart: []
-      };
-    
     case 'ADD_TO_CART':
       const existingItem = state.cart.find(item => item.id === action.payload.id);
       if (existingItem) {
@@ -68,31 +56,76 @@ const appReducer = (state, action) => {
         cart: []
       };
     
-    case 'SHOW_AUTH_MODAL':
+    case 'SHOW_OTP_MODAL':
       return {
         ...state,
-        showAuthModal: true,
-        authMode: action.payload || 'login'
+        showOtpModal: true,
+        otpData: {
+          ...state.otpData,
+          mobile: action.payload.mobile,
+          orderData: action.payload.orderData
+        }
       };
     
-    case 'HIDE_AUTH_MODAL':
+    case 'HIDE_OTP_MODAL':
       return {
         ...state,
-        showAuthModal: false
+        showOtpModal: false,
+        otpData: {
+          mobile: '',
+          otp: '',
+          isVerified: false,
+          orderData: null
+        }
       };
     
-    case 'SET_AUTH_MODE':
+    case 'SET_OTP':
       return {
         ...state,
-        authMode: action.payload
+        otpData: {
+          ...state.otpData,
+          otp: action.payload
+        }
       };
     
-    case 'ADD_ORDER':
+    case 'VERIFY_OTP_SUCCESS':
       return {
         ...state,
-        orders: [...state.orders, action.payload],
-        currentOrder: action.payload,
-        cart: []
+        otpData: {
+          ...state.otpData,
+          isVerified: true
+        }
+      };
+    
+    case 'CREATE_ORDER':
+      const newOrder = {
+        id: `ORD${Date.now()}`,
+        mobile: action.payload.mobile,
+        items: action.payload.items,
+        total: action.payload.total,
+        address: action.payload.address,
+        status: 'confirmed',
+        timestamp: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000).toISOString() // 45 minutes
+      };
+      
+      // Store in localStorage for persistence
+      const existingOrders = JSON.parse(localStorage.getItem('hotelDhanlakshmiOrders') || '[]');
+      const updatedOrders = [...existingOrders, newOrder];
+      localStorage.setItem('hotelDhanlakshmiOrders', JSON.stringify(updatedOrders));
+      
+      return {
+        ...state,
+        orders: [...state.orders, newOrder],
+        currentOrder: newOrder,
+        cart: [],
+        showOtpModal: false,
+        otpData: {
+          mobile: '',
+          otp: '',
+          isVerified: false,
+          orderData: null
+        }
       };
     
     case 'UPDATE_ORDER_STATUS':

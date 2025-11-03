@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const Cart = () => {
-  const { cart, dispatch, isAuthenticated } = useApp();
+  const { cart, dispatch } = useApp();
 
   const updateQuantity = (itemId, newQuantity) => {
     dispatch({
@@ -23,23 +23,6 @@ const Cart = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Please Login to View Cart</h2>
-          <p className="text-gray-600 mb-8">You need to be logged in to access your cart and place orders.</p>
-          <button
-            onClick={() => dispatch({ type: 'SHOW_AUTH_MODAL', payload: 'login' })}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-          >
-            Login Now
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   if (cart.length === 0) {
     return (
