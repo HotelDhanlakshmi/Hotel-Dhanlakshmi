@@ -58,39 +58,49 @@ const AdminDashboard = () => {
           'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
         }
       });
-      
+
       if (ordersResponse.ok) {
         const ordersData = await ordersResponse.json();
         setOrders(ordersData.data || []);
         
         // Calculate stats
+        const totalOrders = ordersData.data?.length || 0;
+        const pendingOrders = ordersData.data?.filter(order => 
+          ['pending', 'confirmed', 'preparing'].includes(order.status)
+        ).length || 0;
+        
         const today = new Date().toDateString();
-        const todayOrders = ordersData.data.filter(order => 
-          new Date(order.timestamp).toDateString() === today
-        );
-        
-        setStats(prevStats => ({
-          ...prevStats,
-          totalOrders: ordersData.data.length,
-          pendingOrders: ordersData.data.filter(o => !['delivered', 'cancelled'].includes(o.status)).length,
-          todayRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0)
-        }));
-      }
+        const todayRevenue = ordersData.data?.filter(order => 
+          new Date(order.createdAt).toDateString() === today
+        ).reduce((sum, order) => sum + (order.totalAmount || 0), 0) || 0;
 
-      // Fetch products
-      const productsResponse = await fetch('http://localhost:5000/api/menu');
-      if (productsResponse.ok) {
-        const productsData = await productsResponse.json();
-        const productsList = productsData.data?.items || [];
-        setProducts(productsList);
+        // Fetch products from database
+        const productsResponse = await fetch('http://localhost:5000/api/admin/products', {
+          headers: {
+            'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+          }
+        });
         
-        // Update products count in stats
-        setStats(prevStats => ({
-          ...prevStats,
-          totalProducts: productsList.length
-        }));
+        if (productsResponse.ok) {
+          const productsData = await productsResponse.json();
+          const productsList = productsData.data || [];
+          setProducts(productsList);
+          
+          setStats({
+            totalOrders,
+            pendingOrders,
+            todayRevenue,
+            totalProducts: productsList.length
+          });
+        } else {
+          setStats({
+            totalOrders,
+            pendingOrders,
+            todayRevenue,
+            totalProducts: 0
+          });
+        }
       }
-
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
