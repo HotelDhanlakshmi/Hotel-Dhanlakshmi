@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs').promises;
 const path = require('path');
 const cron = require('node-cron');
+const whatsappService = require('./services/whatsappService');
 require('dotenv').config();
 
 const app = express();
@@ -149,13 +150,24 @@ app.post('/api/send-otp', otpLimiter, async (req, res) => {
 
     await writeJsonFile(OTP_FILE, otpData);
 
-    // In production, send actual SMS here
-    console.log(`OTP for ${mobile}: ${otp}`);
+    // Send OTP via WhatsApp
+    try {
+      if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.NODE_ENV === 'production') {
+        await whatsappService.sendOTP(mobile, otp);
+        console.log(`WhatsApp OTP sent to ${mobile}`);
+      } else {
+        // Development mode - show OTP in console
+        console.log(`🔐 OTP for ${mobile}: ${otp}`);
+      }
+    } catch (whatsappError) {
+      console.error('WhatsApp send failed, OTP stored for manual verification:', whatsappError.message);
+      // Continue even if WhatsApp fails - OTP is stored for verification
+    }
 
     res.json({ 
       success: true, 
-      message: 'OTP sent successfully',
-      // Remove this in production
+      message: 'OTP sent successfully via WhatsApp',
+      // Show OTP in development mode only
       otp: process.env.NODE_ENV === 'development' ? otp : undefined
     });
   } catch (error) {
@@ -268,6 +280,17 @@ app.post('/api/orders', async (req, res) => {
     orders.push(order);
     await writeJsonFile(ORDERS_FILE, orders);
 
+    // Send WhatsApp order confirmation
+    try {
+      if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.NODE_ENV === 'production') {
+        await whatsappService.sendOrderConfirmation(mobile, order);
+        console.log(`WhatsApp order confirmation sent to ${mobile}`);
+      }
+    } catch (whatsappError) {
+      console.error('WhatsApp order confirmation failed:', whatsappError.message);
+      // Don't fail the order creation if WhatsApp fails
+    }
+
     res.status(201).json({ 
       success: true, 
       message: 'Order created successfully',
@@ -376,12 +399,46 @@ app.put('/api/orders/:orderId/status', adminAuth, async (req, res) => {
   }
 });
 
+// WhatsApp webhook verification
+app.get('/api/webhook/whatsapp', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+    console.log('WhatsApp webhook verified successfully');
+    res.status(200).send(challenge);
+  } else {
+    res.status(403).send('Forbidden');
+  }
+});
+
+// WhatsApp webhook for receiving messages
+app.post('/api/webhook/whatsapp', express.raw({ type: 'application/json' }), (req, res) => {
+  const signature = req.headers['x-hub-signature-256'];
+  
+  if (!whatsappService.verifyWebhook(signature, req.body)) {
+    return res.status(403).send('Forbidden');
+  }
+
+  const body = JSON.parse(req.body);
+  
+  // Handle incoming WhatsApp messages here
+  console.log('WhatsApp webhook received:', JSON.stringify(body, null, 2));
+  
+  res.status(200).send('OK');
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 
     success: true, 
     message: 'Hotel Dhanlakshmi API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    whatsapp: {
+      configured: !!process.env.WHATSAPP_ACCESS_TOKEN,
+      phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ? 'Set' : 'Not Set'
+    }
   });
 });
 

@@ -1,13 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
 const Checkout = () => {
-  const { cart, dispatch } = useApp();
+  const { cart, userInfo, dispatch } = useApp();
   const navigate = useNavigate();
-  
-  // Debug: Log cart state
-  console.log('Checkout - Cart state:', cart);
   
   // Add loading state for debugging
   if (!cart) {
@@ -20,8 +17,9 @@ const Checkout = () => {
       </div>
     );
   }
-  const [mobile, setMobile] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState({
+  
+  const [mobile, setMobile] = useState(userInfo.mobile || '');
+  const [deliveryAddress, setDeliveryAddress] = useState(userInfo.deliveryAddress || {
     name: '',
     street: '',
     city: '',
@@ -32,11 +30,39 @@ const Checkout = () => {
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('cod');
   const [deliveryInstructions, setDeliveryInstructions] = useState('');
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryFee = 0; // Free delivery
   const taxes = Math.round(subtotal * 0.05); // 5% tax
   const total = subtotal + deliveryFee + taxes;
+
+  // Helper functions
+  const getTotalItems = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  // Save user info to localStorage when they type
+  const handleMobileChange = (value) => {
+    setMobile(value);
+    dispatch({
+      type: 'UPDATE_USER_INFO',
+      payload: { mobile: value }
+    });
+  };
+
+  const handleAddressChange = (field, value) => {
+    const newAddress = { ...deliveryAddress, [field]: value };
+    setDeliveryAddress(newAddress);
+    dispatch({
+      type: 'UPDATE_USER_INFO',
+      payload: { deliveryAddress: newAddress }
+    });
+  };
 
   // Fraud prevention checks
   const isValidOrder = () => {
@@ -78,7 +104,7 @@ const Checkout = () => {
   const handlePlaceOrder = async () => {
     if (!isValidOrder()) return;
 
-    setIsLoading(true);
+    setIsPlacingOrder(true);
 
     try {
       // Simulate sending OTP
@@ -96,10 +122,13 @@ const Checkout = () => {
           }
         }
       });
+
+      // Clear cart after successful order (will be done after OTP verification)
+      // dispatch({ type: 'CLEAR_CART' });
     } catch (error) {
       alert('Failed to send OTP. Please try again.');
     } finally {
-      setIsLoading(false);
+      setIsPlacingOrder(false);
     }
   };
 
@@ -137,6 +166,16 @@ const Checkout = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Checkout</h1>
         <p className="text-gray-600">Review your order and complete your purchase</p>
+        {(userInfo.mobile || userInfo.deliveryAddress?.name) && (
+          <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center space-x-2 text-green-700">
+              <span>✅</span>
+              <span className="text-sm font-medium">
+                Your information has been saved and will be auto-filled
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -153,7 +192,7 @@ const Checkout = () => {
                   type="tel"
                   placeholder="Enter mobile number • मोबाईल नंबर टाका"
                   value={mobile}
-                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  onChange={(e) => handleMobileChange(e.target.value.replace(/\D/g, '').slice(0, 10))}
                   className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
                     errors.mobile ? 'border-red-500' : 'border-orange-200'
                   }`}
@@ -188,7 +227,7 @@ const Checkout = () => {
                   type="text"
                   placeholder="Full Name • पूर्ण नाव"
                   value={deliveryAddress.name}
-                  onChange={(e) => setDeliveryAddress({...deliveryAddress, name: e.target.value})}
+                  onChange={(e) => handleAddressChange('name', e.target.value)}
                   className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
                     errors.name ? 'border-red-500' : 'border-orange-200'
                   }`}
@@ -202,7 +241,7 @@ const Checkout = () => {
                 <textarea
                   placeholder="Street Address • रस्त्याचा पत्ता"
                   value={deliveryAddress.street}
-                  onChange={(e) => setDeliveryAddress({...deliveryAddress, street: e.target.value})}
+                  onChange={(e) => handleAddressChange('street', e.target.value)}
                   rows="3"
                   className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
                     errors.street ? 'border-red-500' : 'border-orange-200'
@@ -219,7 +258,7 @@ const Checkout = () => {
                     type="text"
                     placeholder="City • शहर"
                     value={deliveryAddress.city}
-                    onChange={(e) => setDeliveryAddress({...deliveryAddress, city: e.target.value})}
+                    onChange={(e) => handleAddressChange('city', e.target.value)}
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
                       errors.city ? 'border-red-500' : 'border-orange-200'
                     }`}
@@ -234,7 +273,7 @@ const Checkout = () => {
                     type="text"
                     placeholder="Pincode • पिनकोड"
                     value={deliveryAddress.pincode}
-                    onChange={(e) => setDeliveryAddress({...deliveryAddress, pincode: e.target.value.replace(/\D/g, '').slice(0, 6)})}
+                    onChange={(e) => handleAddressChange('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
                     className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
                       errors.pincode ? 'border-red-500' : 'border-orange-200'
                     }`}
@@ -355,7 +394,7 @@ const Checkout = () => {
               <hr />
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Total Amount</span>
-                <span className="font-bold text-orange-600">₹{finalTotal}</span>
+                <span className="font-bold text-orange-600">₹{total}</span>
               </div>
             </div>
 
@@ -383,7 +422,7 @@ const Checkout = () => {
                   <span>Placing Order...</span>
                 </div>
               ) : (
-                `Place Order - ₹${finalTotal}`
+                `Place Order - ₹${total}`
               )}
             </button>
 
