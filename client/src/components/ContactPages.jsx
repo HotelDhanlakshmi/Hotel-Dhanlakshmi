@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 const ContactPage = () => {
-  // --- State for the contact form ---
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -10,25 +9,52 @@ const ContactPage = () => {
     subject: '',
     message: '',
   });
+  
+  // --- State for submission ---
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formStatus, setFormStatus] = useState(null); // null, 'success', or 'error'
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  // --- UPDATED SUBMIT FUNCTION ---
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add your logic to send this form data to your server or an email service
-    console.log("Form Data Submitted:", formData);
-    alert('Thank you for your message! We will get back to you soon.');
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: '',
-    });
+    setIsSubmitting(true);
+    setFormStatus(null);
+
+    try {
+      // --- YOUR FORMSPREE LINK IS PASTED HERE ---
+      const response = await fetch('https://formspree.io/f/xpwogrny', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setFormStatus('success');
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+        });
+      } else {
+        throw new Error('Form submission failed');
+      }
+    } catch (error) {
+      console.error(error);
+      setFormStatus('error');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -37,7 +63,7 @@ const ContactPage = () => {
         
         {/* --- Header Section --- */}
         <div className="text-center mb-12">
-          <div className="marathi-heading text-3xl md:text-4xl mb-4 gradient-text">
+           <div className="marathi-heading text-3xl md:text-4xl mb-4 gradient-text">
             📞 आमच्याशी संपर्क साधा 📞
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
@@ -58,7 +84,7 @@ const ContactPage = () => {
           <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
             <h3 className="text-2xl font-semibold text-gray-800 mb-6">Send us a Message</h3>
             <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
+               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name (पूर्ण नाव)</label>
                 <input
                   type="text"
@@ -70,7 +96,6 @@ const ContactPage = () => {
                   className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address (ईमेल)</label>
                 <input
@@ -83,7 +108,6 @@ const ContactPage = () => {
                   className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-
               <div>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700">Phone Number (फोन नंबर)</label>
                 <input
@@ -96,7 +120,6 @@ const ContactPage = () => {
                   className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-              
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700">Subject (विषय)</label>
                 <input
@@ -109,7 +132,6 @@ const ContactPage = () => {
                   className="mt-1 block w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-orange-500 focus:border-orange-500"
                 />
               </div>
-
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700">Message (संदेश)</label>
                 <textarea
@@ -126,19 +148,31 @@ const ContactPage = () => {
               <div>
                 <button
                   type="submit"
-                  className="w-full maharashtrian-gradient hover:shadow-glow text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-traditional"
+                  disabled={isSubmitting} // --- Disable button when sending ---
+                  className="w-full maharashtrian-gradient hover:shadow-glow text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-traditional disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Send Message (संदेश पाठवा)
+                  {isSubmitting ? 'Sending...' : 'Send Message (संदेश पाठवा)'}
                 </button>
               </div>
+              
+              {/* --- Show success or error messages --- */}
+              {formStatus === 'success' && (
+                <p className="text-green-600 text-center">
+                  Thank you! Your message has been sent. (तुमचा संदेश पाठवला आहे!)
+                </p>
+              )}
+              {formStatus === 'error' && (
+                <p className="text-red-600 text-center">
+                  Something went wrong. Please try again. (काहीतरी चूक झाली आहे.)
+                </p>
+              )}
+
             </form>
           </div>
 
           {/* --- Column 2: Contact Details --- */}
           <div className="space-y-8">
-            
-            {/* --- ADDRESS UPDATED HERE --- */}
-            <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
+             <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Our Address</h3>
               <p className="text-lg text-gray-600 mb-4">
                 Nagar Manmad Road, SH 10, 
@@ -146,32 +180,28 @@ const ContactPage = () => {
                 Rahuri Factory, Maharashtra 413706
               </p>
               <a 
-                href="#map-location" // This links to the map section below
+                href="#map-location"
                 className="font-semibold text-orange-600 hover:underline"
               >
                 Get Directions (दिशा-निर्देश मिळवा) →
               </a>
             </div>
             
-            {/* --- PHONE NUMBER UPDATED HERE --- */}
             <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Call Us</h3>
               <p className="text-lg text-gray-600 mb-2">
                 <strong>Contact (संपर्क):</strong>
                 <br />
-                {/* --- TODO: Add your main contact number --- */}
+                {/* --- TODO: Remember to add your real phone number --- */}
                 <a href="tel:+919876543210" className="text-orange-600 hover:underline">+91 98765 43210</a>
               </p>
             </div>
-
-            {/* --- RESTAURANT HOURS REMOVED --- */}
-            
           </div>
         </div>
 
         {/* --- Map Section --- */}
         <div id="map-location" className="mt-16">
-          <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
+           <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
             <div className="text-center mb-6">
               <h2 className="text-3xl font-bold text-gray-800 mb-2">Find Us Here</h2>
               <div className="marathi-heading text-xl text-orange-600">
@@ -179,10 +209,9 @@ const ContactPage = () => {
               </div>
             </div>
             
-            {/* --- YOUR GOOGLE MAP IFRAME IS HERE --- */}
             <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden relative">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3761.8941759912736!2d74.58818967521509!3d19.460128881825174!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bdced4d7dc66005%3A0xb268a0b7389256ec!2sDhanlaxmi%20Hotel%20%26%20Lodging!5e0!3m2!1sen!2sin!4v1762190745427!5m2!1sen!2sin" 
+                src="http://googleusercontent.com/maps/google.com/2" 
                 width="100%" 
                 height="450" 
                 style={{ border: 0 }} 
