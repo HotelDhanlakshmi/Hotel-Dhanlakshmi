@@ -1,43 +1,24 @@
+import React from 'react'; // Added React import, which is good practice
+
 const CategoryFilter = ({ categories, selectedCategory, onCategoryChange }) => {
-  const allCategories = [{ id: 'all', name: 'All Items', icon: '🍽️', marathi: 'सर्व पदार्थ' }, ...categories];
+  // Added "All Items" category (English only)
+  const allCategories = [{ id: 'all', name: 'All Items', icon: '🍽️' }, ...categories];
 
-  // Add Marathi names to categories
-  const categoriesWithMarathi = allCategories.map(cat => ({
-    ...cat,
-    marathi: cat.marathi || getMarathiName(cat.name)
-  }));
-
-  function getMarathiName(name) {
-    const marathiNames = {
-      'All Items': 'सर्व पदार्थ',
-      'Pizza/Burger': 'पिझ्झा/बर्गर',
-      'Chicken': 'चिकन',
-      'Mutton': 'मटण',
-      'Fish': 'मासे',
-      'Rice/Roti': 'भात/रोटी',
-      'Paratha': 'पराठा',
-      'Starters': 'स्टार्टर्स',
-      'Biryani': 'बिर्याणी',
-      'Chinese-Veg': 'चायनीज-व्हेज',
-      'Chinese Non-Veg': 'चायनीज नॉन-व्हेज',
-      'Veg-Main Course': 'व्हेज मुख्य पदार्थ',
-      'Tandoori/Kabab': 'तंदूरी/कबाब',
-      'Sp.Thali': 'स्पेशल थाळी',
-      'Beverages': 'पेये',
-      'Soups': 'सूप'
-    };
-    return marathiNames[name] || name;
-  }
+  // Removed the getMarathiName function and marathiNames const
+  // Removed the categoriesWithMarathi map
 
   return (
     <div className="bg-white shadow-traditional border-y-2 maharashtrian-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="text-center mb-4">
-          <h3 className="marathi-heading text-xl text-orange-600 mb-1">श्रेणी निवडा</h3>
-          <p className="text-sm text-gray-600">Choose Category</p>
+          {/* Removed Marathi heading, styled English as main heading */}
+          <h3 className="text-xl font-semibold text-gray-800 mb-1">
+            Choose Category
+          </h3>
         </div>
         <div className="flex overflow-x-auto space-x-4 scrollbar-hide pb-2">
-          {categoriesWithMarathi.map((category) => (
+          {/* Map directly over allCategories */}
+          {allCategories.map((category) => (
             <button
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
@@ -50,7 +31,7 @@ const CategoryFilter = ({ categories, selectedCategory, onCategoryChange }) => {
               <span className="text-3xl">{category.icon}</span>
               <div className="text-center">
                 <div className="text-sm font-medium whitespace-nowrap">{category.name}</div>
-                <div className="marathi-text text-xs opacity-80 whitespace-nowrap">{category.marathi}</div>
+                {/* Removed the Marathi text div */}
               </div>
             </button>
           ))}
