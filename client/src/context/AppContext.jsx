@@ -35,7 +35,9 @@ const initialState = {
       city: '',
       state: 'Maharashtra',
       pincode: ''
-    }
+    },
+    isVerified: false,
+    verifiedAt: null
   }),
   otpData: {
     mobile: '',
@@ -101,6 +103,14 @@ const appReducer = (state, action) => {
       newState = {
         ...state,
         userInfo: { ...state.userInfo, ...action.payload }
+      };
+      saveToStorage('hotel_user_info', newState.userInfo);
+      return newState;
+
+    case 'SET_USER_VERIFIED':
+      newState = {
+        ...state,
+        userInfo: action.payload
       };
       saveToStorage('hotel_user_info', newState.userInfo);
       return newState;

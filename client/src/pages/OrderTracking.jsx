@@ -1,14 +1,57 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { API_ENDPOINTS } from '../config/api';
 
 const OrderTracking = () => {
   const { orderId } = useParams();
+  const [searchParams] = useSearchParams();
+  const mobile = searchParams.get('mobile');
   const { orders, currentOrder, dispatch } = useApp();
   const [deliveryBoyLocation, setDeliveryBoyLocation] = useState({ lat: 19.0760, lng: 72.8777 });
   const [customerLocation] = useState({ lat: 19.0896, lng: 72.8656 });
+  const [order, setOrder] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const order = orders.find(o => o.id === orderId) || currentOrder;
+  // First try to find order in local state, then fetch from backend
+  useEffect(() => {
+    const localOrder = orders.find(o => o.id === orderId) || currentOrder;
+    if (localOrder) {
+      setOrder(localOrder);
+      setIsLoading(false);
+    } else if (orderId && mobile) {
+      // Fetch order from backend
+      fetchOrder();
+    } else {
+      setError('Order ID or mobile number missing');
+      setIsLoading(false);
+    }
+  }, [orderId, mobile, orders, currentOrder]);
+
+  const fetchOrder = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(`${API_ENDPOINTS.GET_ORDERS_BY_MOBILE(mobile)}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        const foundOrder = data.data.find(o => o.id === orderId);
+        if (foundOrder) {
+          setOrder(foundOrder);
+        } else {
+          setError('Order not found');
+        }
+      } else {
+        setError(data.error || 'Failed to fetch order');
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      setError('Network error while fetching order');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const orderStatuses = [
     { id: 'confirmed', label: 'Order Confirmed', icon: '✅', time: '2 min ago' },
@@ -78,19 +121,46 @@ const OrderTracking = () => {
     return minutes > 0 ? `${minutes} min` : 'Arriving soon';
   };
 
-  if (!order) {
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Loading Order Details...</h2>
+          <p className="text-gray-600">Please wait while we fetch your order information</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !order) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
           <div className="text-6xl mb-4">❓</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Order Not Found</h2>
-          <p className="text-gray-600 mb-8">We couldn't find an order with ID: {orderId}</p>
-          <Link
-            to="/"
-            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors inline-block"
-          >
-            Back to Home
-          </Link>
+          <p className="text-gray-600 mb-4">{error || `We couldn't find an order with ID: ${orderId}`}</p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
+            <p className="text-yellow-800 text-sm">
+              <strong>Tip:</strong> Make sure you're using the correct order ID and mobile number from your order confirmation.
+            </p>
+          </div>
+          <div className="space-x-4">
+            <Link
+              to="/"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors inline-block"
+            >
+              Back to Home
+            </Link>
+            <Link
+              to="/track-order"
+              className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors inline-block"
+            >
+              Track Another Order
+            </Link>
+          </div>
         </div>
       </div>
     );

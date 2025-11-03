@@ -50,6 +50,12 @@ const Navbar = () => {
             <Link to="/contact" className="text-gray-700 hover:text-orange-500 font-medium transition-colors">
               Contact
             </Link>
+            <Link to="/orders" className="text-gray-700 hover:text-orange-500 font-medium transition-colors">
+              My Orders
+            </Link>
+            <Link to="/admin/login" className="text-gray-700 hover:text-orange-500 font-medium transition-colors">
+              Admin
+            </Link>
           </div>
 
           {/* Right Side Actions */}
@@ -98,6 +104,12 @@ const Navbar = () => {
               </Link>
               <Link to="/contact" className="text-gray-700 hover:text-orange-500 font-medium py-2 transition-colors">
                 Contact
+              </Link>
+              <Link to="/orders" className="text-gray-700 hover:text-orange-500 font-medium py-2 transition-colors">
+                My Orders
+              </Link>
+              <Link to="/admin/login" className="text-gray-700 hover:text-orange-500 font-medium py-2 transition-colors">
+                Admin
               </Link>
               <Link to="/track-order" className="text-gray-700 hover:text-orange-500 font-medium py-2 transition-colors">
                 Track Order

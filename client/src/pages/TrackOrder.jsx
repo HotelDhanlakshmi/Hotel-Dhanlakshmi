@@ -1,282 +1,305 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { API_ENDPOINTS } from '../config/api';
 
 const TrackOrder = () => {
-  const { orders } = useApp();
-  const [mobile, setMobile] = useState('');
+  const navigate = useNavigate();
+  const { userInfo } = useApp();
+  const [mobile, setMobile] = useState(userInfo.mobile || '');
   const [orderId, setOrderId] = useState('');
-  const [foundOrder, setFoundOrder] = useState(null);
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [userOrders, setUserOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [showOrdersList, setShowOrdersList] = useState(false);
+  const [showManualTrack, setShowManualTrack] = useState(false);
 
-  const handleTrackOrder = async () => {
-    if (!mobile || !orderId) {
-      setError('कृपया मोबाईल नंबर आणि ऑर्डर ID टाका • Please enter mobile number and order ID');
-      return;
+  useEffect(() => {
+    if (userInfo.mobile && userInfo.isVerified) {
+      setMobile(userInfo.mobile);
+      fetchUserOrders();
     }
+  }, [userInfo]);
 
-    if (!/^[6-9]\d{9}$/.test(mobile)) {
-      setError('कृपया वैध मोबाईल नंबर टाका • Please enter valid mobile number');
-      return;
-    }
-
-    setIsLoading(true);
-    setError('');
-
+  const fetchUserOrders = async () => {
+    if (!userInfo.mobile) return;
+    
+    setIsLoadingOrders(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Find order by mobile and order ID
-      const order = orders.find(o => o.mobile === mobile && o.id === orderId);
+      const response = await fetch(API_ENDPOINTS.GET_ORDERS_BY_MOBILE(userInfo.mobile));
+      const data = await response.json();
       
-      if (order) {
-        setFoundOrder(order);
-      } else {
-        setError('ऑर्डर सापडला नाही • Order not found');
-        setFoundOrder(null);
+      if (data.success) {
+        setUserOrders(data.data || []);
+        setShowOrdersList(true);
       }
-    } catch (err) {
-      setError('काहीतरी चूक झाली • Something went wrong');
+    } catch (error) {
+      console.error('Error fetching orders:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoadingOrders(false);
     }
   };
 
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      confirmed: {
-        icon: '✅',
-        text: 'Order Confirmed',
-        marathi: 'ऑर्डर कन्फर्म',
-        color: 'text-green-600',
-        bgColor: 'bg-green-100'
-      },
-      preparing: {
-        icon: '👨‍🍳',
-        text: 'Preparing Food',
-        marathi: 'जेवण तयार करत आहे',
-        color: 'text-blue-600',
-        bgColor: 'bg-blue-100'
-      },
-      ready: {
-        icon: '📦',
-        text: 'Ready for Pickup',
-        marathi: 'पिकअपसाठी तयार',
-        color: 'text-purple-600',
-        bgColor: 'bg-purple-100'
-      },
-      'out-for-delivery': {
-        icon: '🚚',
-        text: 'Out for Delivery',
-        marathi: 'डिलिव्हरीसाठी निघाले',
-        color: 'text-orange-600',
-        bgColor: 'bg-orange-100'
-      },
-      delivered: {
-        icon: '🎉',
-        text: 'Delivered',
-        marathi: 'डिलिव्हर झाले',
-        color: 'text-green-600',
-        bgColor: 'bg-green-100'
-      }
-    };
-    return statusMap[status] || statusMap.confirmed;
+  const handleTrackOrder = () => {
+    const newErrors = {};
+
+    if (!mobile || !/^[6-9]\d{9}$/.test(mobile)) {
+      newErrors.mobile = 'Please enter a valid 10-digit mobile number';
+    }
+
+    if (!orderId.trim()) {
+      newErrors.orderId = 'Please enter order ID';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      navigate(`/track-order/${orderId}?mobile=${mobile}`);
+    }
   };
 
-  const formatTime = (timestamp) => {
-    return new Date(timestamp).toLocaleString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const handleOrderClick = (order) => {
+    navigate(`/track-order/${order.id || order.orderId}?mobile=${mobile}`);
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'confirmed': 'bg-blue-100 text-blue-800',
+      'preparing': 'bg-yellow-100 text-yellow-800',
+      'ready': 'bg-purple-100 text-purple-800',
+      'out-for-delivery': 'bg-orange-100 text-orange-800',
+      'delivered': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  const getStatusIcon = (status) => {
+    const icons = {
+      'confirmed': '✅',
+      'preparing': '👨‍🍳',
+      'ready': '📦',
+      'out-for-delivery': '🚚',
+      'delivered': '🎉',
+      'cancelled': '❌'
+    };
+    return icons[status] || '📋';
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="marathi-heading text-3xl md:text-4xl mb-4 text-orange-600">
-            🔍 ऑर्डर ट्रॅक करा 🔍
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">Track Your Order</h1>
-          <p className="text-xl text-gray-600 marathi-text">
-            तुमच्या ऑर्डरची स्थिती पहा • Check your order status
-          </p>
-        </div>
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">Track Your Order</h1>
+        <p className="text-gray-600">Find and track your orders from Hotel Dhanlakshmi</p>
+      </div>
 
-        {/* Search Form */}
-        <div className="maharashtrian-card rounded-xl shadow-traditional p-6 mb-8">
+      {/* User Orders Section */}
+      {userInfo.mobile && userInfo.isVerified ? (
+        <div className="space-y-6">
+          {/* Your Orders */}
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                <span className="mr-2">📋</span>
+                Your Recent Orders
+              </h2>
+              <button
+                onClick={() => setShowManualTrack(!showManualTrack)}
+                className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
+              >
+                {showManualTrack ? 'Hide Manual Track' : 'Track by Order ID'}
+              </button>
+            </div>
+
+            {isLoadingOrders ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading your orders...</p>
+              </div>
+            ) : userOrders.length > 0 ? (
+              <div className="space-y-4">
+                {userOrders.slice(0, 5).map((order) => (
+                  <div
+                    key={order.id || order.orderId}
+                    onClick={() => handleOrderClick(order)}
+                    className="border border-gray-200 rounded-lg p-4 hover:border-orange-300 hover:shadow-md transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <h3 className="font-semibold text-gray-800">
+                            Order #{order.id || order.orderId}
+                          </h3>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                            <span className="mr-1">{getStatusIcon(order.status)}</span>
+                            {order.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm text-gray-600">
+                          <span>📅 {new Date(order.createdAt || order.timestamp).toLocaleDateString()}</span>
+                          <span>💰 ₹{order.total}</span>
+                          <span>🍽️ {order.items.length} items</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                          Track Order
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {userOrders.length > 5 && (
+                  <div className="text-center pt-4">
+                    <button
+                      onClick={() => navigate('/orders')}
+                      className="text-orange-600 hover:text-orange-800 font-medium transition-colors"
+                    >
+                      View All Orders ({userOrders.length})
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-4">📦</div>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">No Orders Found</h3>
+                <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
+                <button
+                  onClick={() => navigate('/menu')}
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                >
+                  Browse Menu
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Manual Track Section */}
+          {showManualTrack && (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                <span className="mr-2">🔍</span>
+                Track by Order ID
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Mobile Number
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="Enter mobile number"
+                    value={mobile}
+                    onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                      errors.mobile ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    maxLength="10"
+                  />
+                  {errors.mobile && (
+                    <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+                  )}
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Order ID
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Enter order ID (e.g., ORD123...)"
+                    value={orderId}
+                    onChange={(e) => setOrderId(e.target.value.toUpperCase())}
+                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                      errors.orderId ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                  />
+                  {errors.orderId && (
+                    <p className="text-red-500 text-sm mt-1">{errors.orderId}</p>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={handleTrackOrder}
+                disabled={!mobile || !orderId}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🔍 Track Order
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <span className="mr-2">🔍</span>
+            Track Your Order
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                📱 Mobile Number • मोबाईल नंबर
+                Mobile Number
               </label>
               <input
                 type="tel"
-                placeholder="Enter mobile number • मोबाईल नंबर टाका"
+                placeholder="Enter mobile number"
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                className="w-full px-4 py-3 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                  errors.mobile ? 'border-red-500' : 'border-gray-200'
+                }`}
                 maxLength="10"
               />
+              {errors.mobile && (
+                <p className="text-red-500 text-sm mt-1">{errors.mobile}</p>
+              )}
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                🆔 Order ID • ऑर्डर ID
+                Order ID
               </label>
               <input
                 type="text"
-                placeholder="Enter order ID • ऑर्डर ID टाका"
+                placeholder="Enter order ID (e.g., ORD123...)"
                 value={orderId}
                 onChange={(e) => setOrderId(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 border-2 border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                  errors.orderId ? 'border-red-500' : 'border-gray-200'
+                }`}
               />
+              {errors.orderId && (
+                <p className="text-red-500 text-sm mt-1">{errors.orderId}</p>
+              )}
             </div>
           </div>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
 
           <button
             onClick={handleTrackOrder}
-            disabled={isLoading || !mobile || !orderId}
-            className="w-full maharashtrian-gradient hover:shadow-glow text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            disabled={!mobile || !orderId}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="spinner mr-2"></div>
-                Tracking... • शोधत आहे...
-              </div>
-            ) : (
-              '🔍 Track Order • ऑर्डर ट्रॅक करा'
-            )}
+            🔍 Track Order
           </button>
-        </div>
-
-        {/* Order Details */}
-        {foundOrder && (
-          <div className="space-y-6">
-            {/* Order Info */}
-            <div className="maharashtrian-card rounded-xl shadow-traditional p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">Order #{foundOrder.id}</h2>
-                  <p className="text-gray-600 marathi-text">ऑर्डर तपशील • Order Details</p>
-                </div>
-                <div className={`px-4 py-2 rounded-full ${getStatusInfo(foundOrder.status).bgColor}`}>
-                  <span className={`font-semibold ${getStatusInfo(foundOrder.status).color}`}>
-                    {getStatusInfo(foundOrder.status).icon} {getStatusInfo(foundOrder.status).text}
-                  </span>
-                  <div className={`text-xs ${getStatusInfo(foundOrder.status).color} marathi-text`}>
-                    {getStatusInfo(foundOrder.status).marathi}
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-500">Order Time:</span>
-                  <div className="font-semibold">{formatTime(foundOrder.timestamp)}</div>
-                </div>
-                <div>
-                  <span className="text-gray-500">Total Amount:</span>
-                  <div className="font-semibold text-orange-600">₹{foundOrder.total}</div>
-                </div>
-                <div>
-                  <span className="text-gray-500">Payment:</span>
-                  <div className="font-semibold">Cash on Delivery</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Order Items */}
-            <div className="maharashtrian-card rounded-xl shadow-traditional p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                🍽️ Order Items • ऑर्डर केलेले पदार्थ
-              </h3>
-              <div className="space-y-3">
-                {foundOrder.items.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0">
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-800">{item.name}</div>
-                      <div className="text-sm text-gray-500">Qty: {item.quantity}</div>
-                    </div>
-                    <div className="font-semibold text-orange-600">
-                      ₹{item.price * item.quantity}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Delivery Address */}
-            <div className="maharashtrian-card rounded-xl shadow-traditional p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                🏠 Delivery Address • डिलिव्हरी पत्ता
-              </h3>
-              <div className="text-gray-700">
-                <div className="font-semibold">{foundOrder.address.name}</div>
-                <div>{foundOrder.address.street}</div>
-                <div>{foundOrder.address.city}, {foundOrder.address.state} - {foundOrder.address.pincode}</div>
-                <div className="mt-2 text-sm text-gray-500">Mobile: {foundOrder.mobile}</div>
-              </div>
-            </div>
-
-            {/* Support */}
-            <div className="maharashtrian-card rounded-xl shadow-traditional p-6 text-center">
-              <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                🆘 Need Help? • मदत हवी आहे?
-              </h3>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a
-                  href="tel:+919876543210"
-                  className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-all"
-                >
-                  📞 Call Support • सपोर्टला कॉल करा
-                </a>
-                <a
-                  href="https://wa.me/919876543210"
-                  className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all"
-                >
-                  💬 WhatsApp • व्हाट्सअप
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* No Order Found State */}
-        {!foundOrder && !isLoading && mobile && orderId && (
-          <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
-            <h3 className="text-2xl font-semibold text-gray-800 mb-2 marathi-heading">
-              ऑर्डर सापडला नाही
-            </h3>
-            <p className="text-xl text-gray-600 mb-6">Order Not Found</p>
-            <p className="text-gray-500 mb-8">
-              Please check your mobile number and order ID • कृपया तुमचा मोबाईल नंबर आणि ऑर्डर ID तपासा
+          
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <p className="text-blue-800 text-sm">
+              <strong>Tip:</strong> Complete user setup to see your order history automatically.
             </p>
             <button
-              onClick={() => {
-                setMobile('');
-                setOrderId('');
-                setError('');
-              }}
-              className="maharashtrian-gradient text-white font-semibold py-3 px-6 rounded-lg transition-all hover:shadow-glow"
+              onClick={() => navigate('/setup')}
+              className="mt-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
             >
-              🔄 Try Again • पुन्हा प्रयत्न करा
+              Complete Setup →
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
     </div>
   );
 };

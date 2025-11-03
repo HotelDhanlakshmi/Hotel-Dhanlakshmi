@@ -10,25 +10,39 @@ import TrackOrder from './pages/TrackOrder';
 import UnderProgress from './components/UnderProgress';
 import OtpModal from './components/OtpModal';
 import Debug from './pages/Debug';
+import UserSetup from './pages/UserSetup';
+import QuickCheckout from './pages/QuickCheckout';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
+import SmartCheckout from './components/SmartCheckout';
+import AllOrders from './pages/AllOrders';
+import SmartRouter from './components/SmartRouter';
 
 function App() {
   return (
     <AppProvider>
       <Router>
         <div className="min-h-screen bg-gray-50">
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/menu" element={<Menu />} />
-            <Route path="/cart" element={<Cart />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/track-order/:orderId" element={<OrderTracking />} />
-            <Route path="/track-order" element={<TrackOrder />} />
-            <Route path="/debug" element={<Debug />} />
-            <Route path="/about" element={<UnderProgress pageName="About Us" />} />
-            <Route path="/contact" element={<UnderProgress pageName="Contact Us" />} />
-          </Routes>
-          <OtpModal />
+          <SmartRouter>
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/menu" element={<Menu />} />
+              <Route path="/cart" element={<Cart />} />
+              <Route path="/checkout" element={<SmartCheckout />} />
+              <Route path="/track-order/:orderId" element={<OrderTracking />} />
+              <Route path="/track-order" element={<TrackOrder />} />
+              <Route path="/orders" element={<AllOrders />} />
+              <Route path="/setup" element={<UserSetup />} />
+              <Route path="/quick-checkout" element={<QuickCheckout />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin/dashboard" element={<AdminDashboard />} />
+              <Route path="/debug" element={<Debug />} />
+              <Route path="/about" element={<UnderProgress pageName="About Us" />} />
+              <Route path="/contact" element={<UnderProgress pageName="Contact Us" />} />
+            </Routes>
+            <OtpModal />
+          </SmartRouter>
         </div>
       </Router>
     </AppProvider>

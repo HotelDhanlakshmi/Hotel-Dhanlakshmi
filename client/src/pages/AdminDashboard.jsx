@@ -1,0 +1,481 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+  const [orders, setOrders] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [stats, setStats] = useState({
+    totalOrders: 0,
+    pendingOrders: 0,
+    todayRevenue: 0,
+    totalProducts: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check admin session
+  useEffect(() => {
+    const adminSession = localStorage.getItem('admin_session');
+    if (!adminSession) {
+      navigate('/admin/login');
+      return;
+    }
+
+    const session = JSON.parse(adminSession);
+    // Check if session is expired (24 hours)
+    const loginTime = new Date(session.loginTime);
+    const now = new Date();
+    const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
+    
+    if (hoursDiff > 24) {
+      localStorage.removeItem('admin_session');
+      navigate('/admin/login');
+      return;
+    }
+
+    fetchData();
+  }, [navigate]);
+
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch orders
+      const ordersResponse = await fetch('http://localhost:5000/api/admin/orders', {
+        headers: {
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+        }
+      });
+      
+      if (ordersResponse.ok) {
+        const ordersData = await ordersResponse.json();
+        setOrders(ordersData.data || []);
+        
+        // Calculate stats
+        const today = new Date().toDateString();
+        const todayOrders = ordersData.data.filter(order => 
+          new Date(order.timestamp).toDateString() === today
+        );
+        
+        setStats({
+          totalOrders: ordersData.data.length,
+          pendingOrders: ordersData.data.filter(o => !['delivered', 'cancelled'].includes(o.status)).length,
+          todayRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0),
+          totalProducts: products.length
+        });
+      }
+
+      // Fetch products
+      const productsResponse = await fetch('http://localhost:5000/api/menu');
+      if (productsResponse.ok) {
+        const productsData = await productsResponse.json();
+        setProducts(productsData.data?.items || []);
+      }
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('admin_session');
+    navigate('/admin/login');
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (response.ok) {
+        fetchData(); // Refresh data
+      } else {
+        alert('Failed to update order status');
+      }
+    } catch (error) {
+      alert('Error updating order status');
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const colors = {
+      'confirmed': 'bg-blue-100 text-blue-800',
+      'preparing': 'bg-yellow-100 text-yellow-800',
+      'ready': 'bg-purple-100 text-purple-800',
+      'out-for-delivery': 'bg-orange-100 text-orange-800',
+      'delivered': 'bg-green-100 text-green-800',
+      'cancelled': 'bg-red-100 text-red-800'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800';
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 maharashtrian-gradient rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">🍽️</span>
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-800">Hotel Dhanlakshmi</h1>
+                <p className="text-sm text-gray-500 marathi-text">Admin Dashboard • प्रशासन डॅशबोर्ड</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={fetchData}
+                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                title="Refresh"
+              >
+                🔄
+              </button>
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="text-3xl mr-4">📋</div>
+              <div>
+                <div className="text-2xl font-bold text-gray-800">{stats.totalOrders}</div>
+                <div className="text-gray-600">Total Orders</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="text-3xl mr-4">⏳</div>
+              <div>
+                <div className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</div>
+                <div className="text-gray-600">Pending Orders</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="text-3xl mr-4">💰</div>
+              <div>
+                <div className="text-2xl font-bold text-green-600">₹{stats.todayRevenue}</div>
+                <div className="text-gray-600">Today's Revenue</div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center">
+              <div className="text-3xl mr-4">🍽️</div>
+              <div>
+                <div className="text-2xl font-bold text-blue-600">{stats.totalProducts}</div>
+                <div className="text-gray-600">Total Products</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="bg-white rounded-lg shadow mb-8">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              {[
+                { id: 'overview', name: 'Overview', icon: '📊' },
+                { id: 'orders', name: 'Orders', icon: '📋' },
+                { id: 'products', name: 'Products', icon: '🍽️' },
+                { id: 'settings', name: 'Settings', icon: '⚙️' }
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                    activeTab === tab.id
+                      ? 'border-orange-500 text-orange-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  <span>{tab.icon}</span>
+                  <span>{tab.name}</span>
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="p-6">
+            {/* Overview Tab */}
+            {activeTab === 'overview' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Dashboard Overview</h2>
+                
+                {/* Recent Orders */}
+                <div className="mb-8">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mobile</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {orders.slice(0, 5).map((order) => (
+                          <tr key={order.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {order.id}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {order.mobile}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                              ₹{order.total}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                                {order.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(order.timestamp).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Orders Tab */}
+            {activeTab === 'orders' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">All Orders</h2>
+                
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order Details</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {orders.map((order) => (
+                        <tr key={order.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{order.id}</div>
+                              <div className="text-sm text-gray-500">{new Date(order.timestamp).toLocaleString()}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{order.address.name}</div>
+                              <div className="text-sm text-gray-500">+91 {order.mobile}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="text-sm text-gray-900">
+                              {order.items.map((item, index) => (
+                                <div key={index}>
+                                  {item.name} x{item.quantity}
+                                </div>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                            ₹{order.total}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <select
+                              value={order.status}
+                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                              className={`text-sm border border-gray-300 rounded px-2 py-1 ${getStatusColor(order.status)}`}
+                            >
+                              <option value="confirmed">Confirmed</option>
+                              <option value="preparing">Preparing</option>
+                              <option value="ready">Ready</option>
+                              <option value="out-for-delivery">Out for Delivery</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            <button
+                              onClick={() => alert(`Order Details:\n\nID: ${order.id}\nCustomer: ${order.address.name}\nMobile: +91 ${order.mobile}\nAddress: ${order.address.street}, ${order.address.city}\nTotal: ₹${order.total}\n\nItems:\n${order.items.map(item => `- ${item.name} x${item.quantity} = ₹${item.price * item.quantity}`).join('\n')}`)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              View Details
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Products Tab */}
+            {activeTab === 'products' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">Products Management</h2>
+                  <button
+                    onClick={() => setActiveTab('add-product')}
+                    className="maharashtrian-gradient hover:shadow-glow text-white px-4 py-2 rounded-lg transition-all"
+                  >
+                    Add New Product
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {products.map((product) => (
+                    <div key={product.id} className="bg-white border rounded-lg p-4 shadow-sm">
+                      <div className="aspect-w-16 aspect-h-9 mb-4">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className="w-full h-32 object-cover rounded-lg"
+                          onError={(e) => {
+                            e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                          }}
+                        />
+                      </div>
+                      <h3 className="font-semibold text-gray-800 mb-2">{product.name}</h3>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-lg font-bold text-green-600">₹{product.price}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          product.type === 'veg' ? 'bg-green-100 text-green-800' :
+                          product.type === 'non-veg' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {product.type}
+                        </span>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-3 rounded transition-colors">
+                          Edit
+                        </button>
+                        <button className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded transition-colors">
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Settings Tab */}
+            {activeTab === 'settings' && (
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+                
+                <div className="space-y-6">
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-800 mb-2">Restaurant Information</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
+                        <input
+                          type="text"
+                          defaultValue="Hotel Dhanlakshmi"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input
+                          type="tel"
+                          defaultValue="+91 9876543210"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="font-semibold text-gray-800 mb-2">Order Settings</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Order Amount</label>
+                        <input
+                          type="number"
+                          defaultValue="200"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Max COD Amount</label>
+                        <input
+                          type="number"
+                          defaultValue="2000"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Time (minutes)</label>
+                        <input
+                          type="number"
+                          defaultValue="40"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <button className="maharashtrian-gradient hover:shadow-glow text-white px-6 py-3 rounded-lg transition-all">
+                    Save Settings
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminDashboard;

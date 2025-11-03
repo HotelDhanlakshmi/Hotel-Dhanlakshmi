@@ -30,9 +30,10 @@
       "state": "Maharashtra",
       "pincode": "423402"
     },
-    "status": "confirmed",
+    "status": "delivered",
     "timestamp": "2025-11-03T15:21:28.220Z",
-    "estimatedDelivery": "2025-11-03T16:06:28.220Z"
+    "estimatedDelivery": "2025-11-03T16:06:28.220Z",
+    "updatedAt": "2025-11-03T16:00:38.099Z"
   },
   {
     "id": "ORD1762183330104ZM0O",
