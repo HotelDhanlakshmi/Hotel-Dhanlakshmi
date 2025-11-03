@@ -261,12 +261,12 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 maharashtrian-gradient rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">🍽️</span>
+              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-lg">HD</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-800">Hotel Dhanlakshmi</h1>
-                <p className="text-sm text-gray-500 marathi-text">Admin Dashboard • प्रशासन डॅशबोर्ड</p>
+                <p className="text-sm text-gray-500">Admin Dashboard</p>
               </div>
             </div>
             
@@ -276,7 +276,7 @@ const AdminDashboard = () => {
                 className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
                 title="Refresh"
               >
-                🔄
+                ↻
               </button>
               <button
                 onClick={handleLogout}
@@ -294,7 +294,9 @@ const AdminDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="text-3xl mr-4">📋</div>
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-blue-600 font-bold">TO</span>
+              </div>
               <div>
                 <div className="text-2xl font-bold text-gray-800">{stats.totalOrders}</div>
                 <div className="text-gray-600">Total Orders</div>
@@ -304,7 +306,9 @@ const AdminDashboard = () => {
           
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="text-3xl mr-4">⏳</div>
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-orange-600 font-bold">PO</span>
+              </div>
               <div>
                 <div className="text-2xl font-bold text-orange-600">{stats.pendingOrders}</div>
                 <div className="text-gray-600">Pending Orders</div>
@@ -314,7 +318,9 @@ const AdminDashboard = () => {
           
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="text-3xl mr-4">💰</div>
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-green-600 font-bold">₹</span>
+              </div>
               <div>
                 <div className="text-2xl font-bold text-green-600">₹{stats.todayRevenue}</div>
                 <div className="text-gray-600">Today's Revenue</div>
@@ -324,7 +330,9 @@ const AdminDashboard = () => {
           
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
-              <div className="text-3xl mr-4">🍽️</div>
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-purple-600 font-bold">TP</span>
+              </div>
               <div>
                 <div className="text-2xl font-bold text-blue-600">{stats.totalProducts}</div>
                 <div className="text-gray-600">Total Products</div>
@@ -338,10 +346,10 @@ const AdminDashboard = () => {
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
               {[
-                { id: 'overview', name: 'Overview', icon: '📊' },
-                { id: 'orders', name: 'Orders', icon: '📋' },
-                { id: 'products', name: 'Products', icon: '🍽️' },
-                { id: 'settings', name: 'Settings', icon: '⚙️' }
+                { id: 'overview', name: 'Overview', icon: '◊' },
+                { id: 'orders', name: 'Orders', icon: '□' },
+                { id: 'products', name: 'Products', icon: '◦' },
+                { id: 'settings', name: 'Settings', icon: '⚬' }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -491,14 +499,16 @@ const AdminDashboard = () => {
                     onClick={() => openProductModal()}
                     className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all flex items-center space-x-2"
                   >
-                    <span>➕</span>
+                    <span>+</span>
                     <span>Add New Product</span>
                   </button>
                 </div>
 
                 {products.length === 0 ? (
                   <div className="text-center py-12">
-                    <div className="text-6xl mb-4">🍽️</div>
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-2xl text-gray-400">+</span>
+                    </div>
                     <h3 className="text-xl font-semibold text-gray-800 mb-2">No Products Found</h3>
                     <p className="text-gray-600 mb-6">Start by adding your first product to the menu.</p>
                     <button
@@ -527,7 +537,7 @@ const AdminDashboard = () => {
                               product.type === 'non-veg' ? 'bg-red-100 text-red-800' :
                               'bg-yellow-100 text-yellow-800'
                             }`}>
-                              {product.type === 'veg' ? '🥬 Veg' : product.type === 'non-veg' ? '🍖 Non-Veg' : '🥚 Egg'}
+                              {product.type === 'veg' ? 'VEG' : product.type === 'non-veg' ? 'NON-VEG' : 'EGG'}
                             </span>
                           </div>
                           {!product.available && (
@@ -562,14 +572,14 @@ const AdminDashboard = () => {
                               onClick={() => openProductModal(product)}
                               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-3 rounded transition-colors flex items-center justify-center space-x-1"
                             >
-                              <span>✏️</span>
+                              <span>✎</span>
                               <span>Edit</span>
                             </button>
                             <button 
                               onClick={() => handleDeleteProduct(product.id)}
                               className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded transition-colors flex items-center justify-center space-x-1"
                             >
-                              <span>🗑️</span>
+                              <span>×</span>
                               <span>Delete</span>
                             </button>
                           </div>
@@ -723,21 +733,21 @@ const AdminDashboard = () => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select Category</option>
-                      <option value="pizza-burger">🍕 Pizza/Burger</option>
-                      <option value="chicken">🍗 Chicken</option>
-                      <option value="mutton">🐑 Mutton</option>
-                      <option value="fish">🐟 Fish</option>
-                      <option value="rice-roti">🍚 Rice/Roti</option>
-                      <option value="paratha">🫓 Paratha</option>
-                      <option value="starters">🥗 Starters</option>
-                      <option value="biryani">🍛 Biryani</option>
-                      <option value="chinese-veg">🥢 Chinese-Veg</option>
-                      <option value="chinese-non-veg">🥡 Chinese Non-Veg</option>
-                      <option value="veg-main-course">🥘 Veg-Main Course</option>
-                      <option value="tandoori-kabab">🔥 Tandoori/Kabab</option>
-                      <option value="sp-thali">🍽️ Sp.Thali</option>
-                      <option value="beverages">🥤 Beverages</option>
-                      <option value="soups">🍲 Soups</option>
+                      <option value="pizza-burger">Pizza/Burger</option>
+                      <option value="chicken">Chicken</option>
+                      <option value="mutton">Mutton</option>
+                      <option value="fish">Fish</option>
+                      <option value="rice-roti">Rice/Roti</option>
+                      <option value="paratha">Paratha</option>
+                      <option value="starters">Starters</option>
+                      <option value="biryani">Biryani</option>
+                      <option value="chinese-veg">Chinese-Veg</option>
+                      <option value="chinese-non-veg">Chinese Non-Veg</option>
+                      <option value="veg-main-course">Veg-Main Course</option>
+                      <option value="tandoori-kabab">Tandoori/Kabab</option>
+                      <option value="sp-thali">Sp.Thali</option>
+                      <option value="beverages">Beverages</option>
+                      <option value="soups">Soups</option>
                     </select>
                   </div>
 
@@ -751,9 +761,9 @@ const AdminDashboard = () => {
                       onChange={(e) => setProductForm({...productForm, type: e.target.value})}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="veg">🥬 Vegetarian</option>
-                      <option value="non-veg">🍖 Non-Vegetarian</option>
-                      <option value="egg">🥚 Egg</option>
+                      <option value="veg">Vegetarian</option>
+                      <option value="non-veg">Non-Vegetarian</option>
+                      <option value="egg">Egg</option>
                     </select>
                   </div>
                 </div>
