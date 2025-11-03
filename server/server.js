@@ -597,6 +597,144 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
   }
 });
 
+// Product Management Endpoints (Admin)
+
+// Get all products (admin)
+app.get('/api/admin/products', adminAuth, async (req, res) => {
+  try {
+    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
+    res.json({ success: true, data: menu.items });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// Add new product (admin)
+app.post('/api/admin/products', adminAuth, async (req, res) => {
+  try {
+    const { name, description, price, category, type, image, available } = req.body;
+    
+    // Validation
+    if (!name || !price || !type) {
+      return res.status(400).json({ error: 'Name, price, and type are required' });
+    }
+
+    if (price < 0) {
+      return res.status(400).json({ error: 'Price must be positive' });
+    }
+
+    if (!['veg', 'non-veg', 'egg'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be veg, non-veg, or egg' });
+    }
+
+    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
+    
+    const newProduct = {
+      id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name: name.trim(),
+      description: description?.trim() || '',
+      price: parseFloat(price),
+      category: category?.trim() || '',
+      type,
+      image: image?.trim() || '',
+      available: available !== false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    menu.items.push(newProduct);
+    await writeJsonFile(MENU_FILE, menu);
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Product added successfully',
+      data: newProduct 
+    });
+  } catch (error) {
+    console.error('Error adding product:', error);
+    res.status(500).json({ error: 'Failed to add product' });
+  }
+});
+
+// Update product (admin)
+app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { name, description, price, category, type, image, available } = req.body;
+    
+    // Validation
+    if (!name || !price || !type) {
+      return res.status(400).json({ error: 'Name, price, and type are required' });
+    }
+
+    if (price < 0) {
+      return res.status(400).json({ error: 'Price must be positive' });
+    }
+
+    if (!['veg', 'non-veg', 'egg'].includes(type)) {
+      return res.status(400).json({ error: 'Type must be veg, non-veg, or egg' });
+    }
+
+    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
+    const productIndex = menu.items.findIndex(item => item.id === productId);
+    
+    if (productIndex === -1) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    // Update product
+    menu.items[productIndex] = {
+      ...menu.items[productIndex],
+      name: name.trim(),
+      description: description?.trim() || '',
+      price: parseFloat(price),
+      category: category?.trim() || '',
+      type,
+      image: image?.trim() || '',
+      available: available !== false,
+      updatedAt: new Date().toISOString()
+    };
+
+    await writeJsonFile(MENU_FILE, menu);
+
+    res.json({ 
+      success: true, 
+      message: 'Product updated successfully',
+      data: menu.items[productIndex] 
+    });
+  } catch (error) {
+    console.error('Error updating product:', error);
+    res.status(500).json({ error: 'Failed to update product' });
+  }
+});
+
+// Delete product (admin)
+app.delete('/api/admin/products/:productId', adminAuth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    
+    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
+    const productIndex = menu.items.findIndex(item => item.id === productId);
+    
+    if (productIndex === -1) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+
+    const deletedProduct = menu.items.splice(productIndex, 1)[0];
+    await writeJsonFile(MENU_FILE, menu);
+
+    res.json({ 
+      success: true, 
+      message: 'Product deleted successfully',
+      data: deletedProduct 
+    });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ error: 'Failed to delete product' });
+  }
+});
+
 // Update order status (admin)
 app.put('/api/orders/:orderId/status', adminAuth, async (req, res) => {
   try {

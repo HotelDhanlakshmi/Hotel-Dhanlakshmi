@@ -13,6 +13,18 @@ const AdminDashboard = () => {
     totalProducts: 0
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [productForm, setProductForm] = useState({
+    name: '',
+    description: '',
+    price: '',
+    category: '',
+    type: 'veg',
+    image: '',
+    available: true
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   // Check admin session
   useEffect(() => {
@@ -57,19 +69,26 @@ const AdminDashboard = () => {
           new Date(order.timestamp).toDateString() === today
         );
         
-        setStats({
+        setStats(prevStats => ({
+          ...prevStats,
           totalOrders: ordersData.data.length,
           pendingOrders: ordersData.data.filter(o => !['delivered', 'cancelled'].includes(o.status)).length,
-          todayRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0),
-          totalProducts: products.length
-        });
+          todayRevenue: todayOrders.reduce((sum, order) => sum + order.total, 0)
+        }));
       }
 
       // Fetch products
       const productsResponse = await fetch('http://localhost:5000/api/menu');
       if (productsResponse.ok) {
         const productsData = await productsResponse.json();
-        setProducts(productsData.data?.items || []);
+        const productsList = productsData.data?.items || [];
+        setProducts(productsList);
+        
+        // Update products count in stats
+        setStats(prevStats => ({
+          ...prevStats,
+          totalProducts: productsList.length
+        }));
       }
 
     } catch (error) {
@@ -102,6 +121,113 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       alert('Error updating order status');
+    }
+  };
+
+  // Product Management Functions
+  const openProductModal = (product = null) => {
+    if (product) {
+      setEditingProduct(product);
+      setProductForm({
+        name: product.name || '',
+        description: product.description || '',
+        price: product.price?.toString() || '',
+        category: product.category || '',
+        type: product.type || 'veg',
+        image: product.image || '',
+        available: product.available !== false
+      });
+    } else {
+      setEditingProduct(null);
+      setProductForm({
+        name: '',
+        description: '',
+        price: '',
+        category: '',
+        type: 'veg',
+        image: '',
+        available: true
+      });
+    }
+    setShowProductModal(true);
+  };
+
+  const closeProductModal = () => {
+    setShowProductModal(false);
+    setEditingProduct(null);
+    setProductForm({
+      name: '',
+      description: '',
+      price: '',
+      category: '',
+      type: 'veg',
+      image: '',
+      available: true
+    });
+  };
+
+  const handleProductSubmit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      const productData = {
+        ...productForm,
+        price: parseFloat(productForm.price),
+        id: editingProduct ? editingProduct.id : `item_${Date.now()}`
+      };
+
+      const url = editingProduct 
+        ? `http://localhost:5000/api/admin/products/${editingProduct.id}`
+        : 'http://localhost:5000/api/admin/products';
+      
+      const method = editingProduct ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+        },
+        body: JSON.stringify(productData)
+      });
+
+      if (response.ok) {
+        closeProductModal();
+        fetchData(); // Refresh data
+        alert(editingProduct ? 'Product updated successfully!' : 'Product added successfully!');
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + (errorData.error || 'Failed to save product'));
+      }
+    } catch (error) {
+      console.error('Error saving product:', error);
+      alert('Error saving product. Please try again.');
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    if (!window.confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/products/${productId}`, {
+        method: 'DELETE',
+        headers: {
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+        }
+      });
+
+      if (response.ok) {
+        fetchData(); // Refresh data
+        alert('Product deleted successfully!');
+      } else {
+        const errorData = await response.json();
+        alert('Error: ' + (errorData.error || 'Failed to delete product'));
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      alert('Error deleting product. Please try again.');
     }
   };
 
@@ -362,48 +488,96 @@ const AdminDashboard = () => {
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-2xl font-bold text-gray-800">Products Management</h2>
                   <button
-                    onClick={() => setActiveTab('add-product')}
-                    className="maharashtrian-gradient hover:shadow-glow text-white px-4 py-2 rounded-lg transition-all"
+                    onClick={() => openProductModal()}
+                    className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all flex items-center space-x-2"
                   >
-                    Add New Product
+                    <span>➕</span>
+                    <span>Add New Product</span>
                   </button>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product) => (
-                    <div key={product.id} className="bg-white border rounded-lg p-4 shadow-sm">
-                      <div className="aspect-w-16 aspect-h-9 mb-4">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-32 object-cover rounded-lg"
-                          onError={(e) => {
-                            e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
-                          }}
-                        />
+
+                {products.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">🍽️</div>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No Products Found</h3>
+                    <p className="text-gray-600 mb-6">Start by adding your first product to the menu.</p>
+                    <button
+                      onClick={() => openProductModal()}
+                      className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg transition-all"
+                    >
+                      Add First Product
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {products.map((product) => (
+                      <div key={product.id} className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <div className="relative">
+                          <img
+                            src={product.image || 'https://via.placeholder.com/300x200?text=No+Image'}
+                            alt={product.name}
+                            className="w-full h-48 object-cover"
+                            onError={(e) => {
+                              e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
+                            }}
+                          />
+                          <div className="absolute top-2 right-2">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              product.type === 'veg' ? 'bg-green-100 text-green-800' :
+                              product.type === 'non-veg' ? 'bg-red-100 text-red-800' :
+                              'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {product.type === 'veg' ? '🥬 Veg' : product.type === 'non-veg' ? '🍖 Non-Veg' : '🥚 Egg'}
+                            </span>
+                          </div>
+                          {!product.available && (
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                              <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                                Unavailable
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-gray-800 text-lg">{product.name}</h3>
+                            <span className="text-xl font-bold text-green-600">₹{product.price}</span>
+                          </div>
+                          
+                          {product.description && (
+                            <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
+                          )}
+                          
+                          {product.category && (
+                            <div className="mb-3">
+                              <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                                {product.category}
+                              </span>
+                            </div>
+                          )}
+                          
+                          <div className="flex space-x-2">
+                            <button 
+                              onClick={() => openProductModal(product)}
+                              className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-3 rounded transition-colors flex items-center justify-center space-x-1"
+                            >
+                              <span>✏️</span>
+                              <span>Edit</span>
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded transition-colors flex items-center justify-center space-x-1"
+                            >
+                              <span>🗑️</span>
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                      <h3 className="font-semibold text-gray-800 mb-2">{product.name}</h3>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-lg font-bold text-green-600">₹{product.price}</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          product.type === 'veg' ? 'bg-green-100 text-green-800' :
-                          product.type === 'non-veg' ? 'bg-red-100 text-red-800' :
-                          'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {product.type}
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-3 rounded transition-colors">
-                          Edit
-                        </button>
-                        <button className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded transition-colors">
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -474,6 +648,166 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Product Modal */}
+      {showProductModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-gray-800">
+                  {editingProduct ? 'Edit Product' : 'Add New Product'}
+                </h3>
+                <button
+                  onClick={closeProductModal}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={handleProductSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Product Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={productForm.name}
+                      onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter product name"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Price (₹) *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="0.01"
+                      value={productForm.price}
+                      onChange={(e) => setProductForm({...productForm, price: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter price"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={productForm.description}
+                    onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter product description"
+                    rows="3"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={productForm.category}
+                      onChange={(e) => setProductForm({...productForm, category: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select Category</option>
+                      <option value="appetizers">Appetizers</option>
+                      <option value="main-course">Main Course</option>
+                      <option value="rice-dishes">Rice Dishes</option>
+                      <option value="breads">Breads</option>
+                      <option value="desserts">Desserts</option>
+                      <option value="beverages">Beverages</option>
+                      <option value="snacks">Snacks</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Food Type *
+                    </label>
+                    <select
+                      required
+                      value={productForm.type}
+                      onChange={(e) => setProductForm({...productForm, type: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="veg">🥬 Vegetarian</option>
+                      <option value="non-veg">🍖 Non-Vegetarian</option>
+                      <option value="egg">🥚 Egg</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Image URL
+                  </label>
+                  <input
+                    type="url"
+                    value={productForm.image}
+                    onChange={(e) => setProductForm({...productForm, image: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter image URL"
+                  />
+                  {productForm.image && (
+                    <div className="mt-2">
+                      <img
+                        src={productForm.image}
+                        alt="Preview"
+                        className="w-32 h-24 object-cover rounded border"
+                        onError={(e) => {
+                          e.target.src = 'https://via.placeholder.com/300x200?text=Invalid+URL';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="available"
+                    checked={productForm.available}
+                    onChange={(e) => setProductForm({...productForm, available: e.target.checked})}
+                    className="mr-2"
+                  />
+                  <label htmlFor="available" className="text-sm text-gray-700">
+                    Product is available for ordering
+                  </label>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4 border-t">
+                  <button
+                    type="button"
+                    onClick={closeProductModal}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors"
+                  >
+                    {editingProduct ? 'Update Product' : 'Add Product'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
