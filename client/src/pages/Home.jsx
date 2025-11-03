@@ -22,7 +22,7 @@ const Home = () => {
           const menuData = await response.json();
           setCategories(menuData.categories || []);
           setAllMenuItems(menuData.items || []);
-          // Show only first 8 items on home page
+          // Show first 8 items initially (will be updated by useEffect based on selectedCategory)
           setFilteredItems((menuData.items || []).slice(0, 8));
         }
       } catch (error) {
@@ -46,8 +46,12 @@ const Home = () => {
       );
     }
 
-    // Limit to 8 items on home page
-    setFilteredItems(items.slice(0, 8));
+    // Show all items when "all" category is selected, otherwise limit to 8 for specific categories
+    if (selectedCategory === 'all') {
+      setFilteredItems(items); // Show all items
+    } else {
+      setFilteredItems(items.slice(0, 8)); // Limit to 8 for specific categories
+    }
   }, [selectedCategory, searchQuery, allMenuItems]);
 
   const handleAddToCart = (item) => {
@@ -93,6 +97,9 @@ const Home = () => {
           </h2>
           <p className="text-gray-600 mt-1">
             {filteredItems.length} items available
+            {selectedCategory === 'all' && filteredItems.length > 8 && (
+              <span className="ml-2 text-green-600 font-medium">• Showing all products</span>
+            )}
           </p>
         </div>
 
