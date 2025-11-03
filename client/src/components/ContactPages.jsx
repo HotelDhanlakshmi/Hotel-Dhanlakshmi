@@ -136,47 +136,36 @@ const ContactPage = () => {
 
           {/* --- Column 2: Contact Details --- */}
           <div className="space-y-8">
+            
+            {/* --- ADDRESS UPDATED HERE --- */}
             <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Our Address</h3>
               <p className="text-lg text-gray-600 mb-4">
-                {/* --- Add your hotel's full address here --- */}
-                123, Main Road, Near Landmark,
+                Nagar Manmad Road, SH 10, 
                 <br />
-                Nagpur, Maharashtra - 440001
+                Rahuri Factory, Maharashtra 413706
               </p>
               <a 
                 href="#map-location" // This links to the map section below
                 className="font-semibold text-orange-600 hover:underline"
               >
-                Get Directions (दिशा-निर्देश मिळवा) &rarr;
+                Get Directions (दिशा-निर्देश मिळवा) →
               </a>
             </div>
             
+            {/* --- PHONE NUMBER UPDATED HERE --- */}
             <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Call Us</h3>
               <p className="text-lg text-gray-600 mb-2">
-                <strong>Reservations (बुकिंग):</strong>
+                <strong>Contact (संपर्क):</strong>
                 <br />
+                {/* --- TODO: Add your main contact number --- */}
                 <a href="tel:+919876543210" className="text-orange-600 hover:underline">+91 98765 43210</a>
-              </p>
-              <p className="text-lg text-gray-600">
-                <strong>Front Desk (रिसेप्शन):</strong>
-                <br />
-                <a href="tel:07122345678" className="text-orange-600 hover:underline">0712-2345678</a>
               </p>
             </div>
 
-            <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
-              <h3 className="text-2xl font-semibold text-gray-800 mb-4">Restaurant Hours</h3>
-              <p className="text-lg text-gray-600">
-                <strong>Monday - Sunday:</strong>
-                <br />
-                8:00 AM - 11:00 PM
-              </p>
-              <p className="text-lg text-gray-600 mt-2 marathi-text">
-                (आठवड्याचे सर्व दिवस)
-              </p>
-            </div>
+            {/* --- RESTAURANT HOURS REMOVED --- */}
+            
           </div>
         </div>
 
@@ -190,23 +179,14 @@ const ContactPage = () => {
               </div>
             </div>
             
-            {/* --- PASTE YOUR IFRAME CODE HERE ---
-              Get this from Google Maps -> Share -> Embed a map
-              It will look like <iframe src="..."></iframe>
-            */}
+            {/* --- YOUR GOOGLE MAP IFRAME IS HERE --- */}
             <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden relative">
-              {/* This is a placeholder. Your iframe will replace this. */}
-              {/* <div className="absolute inset-0 flex items-center justify-center text-gray-500">
-                Your Google Map Will Load Here
-              </div> */}
-              
-              {/* --- Example of what you will paste (Replace with your link) --- */}
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d119066.5451993209!2d79.02115167667527!3d21.16113164024873!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bd4c0a5a3116a4f%3A0x6d9531d45c6de8b!2sNagpur%2C%20Maharashtra!5e0!3m2!1sen!2sin!4v1678888888888!5m2!1sen!2sin" 
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3761.8941759912736!2d74.58818967521509!3d19.460128881825174!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bdced4d7dc66005%3A0xb268a0b7389256ec!2sDhanlaxmi%20Hotel%20%26%20Lodging!5e0!3m2!1sen!2sin!4v1762190745427!5m2!1sen!2sin" 
                 width="100%" 
                 height="450" 
                 style={{ border: 0 }} 
-                allowFullScreen="" 
+                allowFullScreen={true} 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"
               ></iframe>
