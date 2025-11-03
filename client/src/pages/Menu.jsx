@@ -4,6 +4,7 @@ import { categories, allMenuItems, getItemsByCategory } from '../data';
 import MenuCard from '../components/MenuCard';
 import CategoryFilter from '../components/CategoryFilter';
 
+
 const Menu = () => {
   const { dispatch, isAuthenticated } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('all');

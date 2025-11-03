@@ -25,7 +25,7 @@ const Hero = () => {
           
           {/* Tagline */}
           <div className="marathi-text text-xl md:text-2xl mb-8 text-yellow-100 bg-black/20 backdrop-blur-sm rounded-lg px-6 py-3 inline-block shadow-traditional">
-            महाराष्ट्रीयन स्वाद • Authentic Maharashtrian Flavors
+             महाराष्ट्रीयन स्वाद • Authentic Maharashtrian Flavors
           </div>
           
           {/* Description */}
@@ -34,8 +34,11 @@ const Hero = () => {
             From spicy <span className="marathi-text font-semibold text-yellow-300">बिर्याणी</span> to delicious <span className="marathi-text font-semibold text-yellow-300">वडा पाव</span>, we serve happiness on every plate.
           </p>
           
-          {/* Feature Cards with Better Visibility */}
+          {/* === MODIFIED FEATURE CARDS === */}
+          {/* Reverted to 3-column grid to include Free Delivery, CoD, and Online Payment */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
+            
+            {/* Added Free Delivery Card Back */}
             <div className="bg-white/95 text-gray-800 backdrop-blur-sm rounded-xl p-6 shadow-2xl transform hover:scale-105 transition-all duration-300">
               <div className="text-4xl mb-3">🚚</div>
               <div className="font-bold text-lg text-orange-600">Free Delivery</div>
@@ -43,20 +46,24 @@ const Hero = () => {
               <div className="text-xs text-gray-500 mt-2">No delivery charges</div>
             </div>
             
-            <div className="bg-white/95 text-gray-800 backdrop-blur-sm rounded-xl p-6 shadow-2xl transform hover:scale-105 transition-all duration-300">
-              <div className="text-4xl mb-3">⏰</div>
-              <div className="font-bold text-lg text-orange-600">30 Min Delivery</div>
-              <div className="marathi-text text-sm text-gray-600 mt-1">३० मिनिटात</div>
-              <div className="text-xs text-gray-500 mt-2">Fast & reliable</div>
-            </div>
-            
+            {/* Kept Cash on Delivery */}
             <div className="bg-white/95 text-gray-800 backdrop-blur-sm rounded-xl p-6 shadow-2xl transform hover:scale-105 transition-all duration-300">
               <div className="text-4xl mb-3">💰</div>
               <div className="font-bold text-lg text-orange-600">Cash on Delivery</div>
               <div className="marathi-text text-sm text-gray-600 mt-1">घरपोच पेमेंट</div>
               <div className="text-xs text-gray-500 mt-2">Pay when you receive</div>
             </div>
+            
+            {/* Kept Online Payment Card */}
+            <div className="bg-white/95 text-gray-800 backdrop-blur-sm rounded-xl p-6 shadow-2xl transform hover:scale-105 transition-all duration-300">
+              <div className="text-4xl mb-3">💳</div>
+              <div className="font-bold text-lg text-orange-600">Online Payment</div>
+              <div className="marathi-text text-sm text-gray-600 mt-1">ऑनलाईन पेमेंट</div>
+              <div className="text-xs text-gray-500 mt-2">Secure & Easy</div>
+            </div>
+
           </div>
+          {/* === END OF MODIFICATIONS === */}
           
           {/* Call to Action */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">

@@ -17,6 +17,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import SmartCheckout from './components/SmartCheckout';
 import AllOrders from './pages/AllOrders';
 import SmartRouter from './components/SmartRouter';
+import ContactPage from './components/ContactPages';
 
 function App() {
   return (
@@ -38,8 +39,8 @@ function App() {
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin/dashboard" element={<AdminDashboard />} />
               <Route path="/debug" element={<Debug />} />
-              <Route path="/about" element={<UnderProgress pageName="About Us" />} />
-              <Route path="/contact" element={<UnderProgress pageName="Contact Us" />} />
+              <Route path="/about" element={<UnderProgress pageName="About Us" />} /> 
+              <Route path="/contact" element={<ContactPage pageName="Contact Us" />} />
             </Routes>
             <OtpModal />
           </SmartRouter>
