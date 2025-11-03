@@ -12,6 +12,7 @@ const whatsappService = require('./services/whatsappService');
 const connectDB = require('./config/database');
 const User = require('./models/User');
 const Order = require('./models/Order');
+const Product = require('./models/Product');
 
 require('dotenv').config();
 
@@ -128,17 +129,75 @@ function isAdminMobile(mobile) {
 
 // API Routes
 
-// Get menu items
+// Get menu items (public endpoint)
 app.get('/api/menu', async (req, res) => {
   try {
-    const menu = await readJsonFile(MENU_FILE);
-    if (!menu) {
-      return res.status(500).json({ error: 'Failed to load menu' });
+    // Try MongoDB first
+    const products = await Product.find({ available: true }).sort({ category: 1, name: 1 });
+    
+    if (products.length > 0) {
+      // Group products by category for frontend compatibility
+      const categories = [
+        { id: 'pizza-burger', name: 'Pizza/Burger', icon: '🍕' },
+        { id: 'chicken', name: 'Chicken', icon: '🍗' },
+        { id: 'mutton', name: 'Mutton', icon: '🐑' },
+        { id: 'fish', name: 'Fish', icon: '🐟' },
+        { id: 'rice-roti', name: 'Rice/Roti', icon: '🍚' },
+        { id: 'paratha', name: 'Paratha', icon: '🫓' },
+        { id: 'starters', name: 'Starters', icon: '🥗' },
+        { id: 'biryani', name: 'Biryani', icon: '🍛' },
+        { id: 'chinese-veg', name: 'Chinese-Veg', icon: '🥢' },
+        { id: 'chinese-non-veg', name: 'Chinese Non-Veg', icon: '🥡' },
+        { id: 'veg-main-course', name: 'Veg-Main Course', icon: '🥘' },
+        { id: 'tandoori-kabab', name: 'Tandoori/Kabab', icon: '🔥' },
+        { id: 'sp-thali', name: 'Sp.Thali', icon: '🍽️' },
+        { id: 'beverages', name: 'Beverages', icon: '🥤' },
+        { id: 'soups', name: 'Soups', icon: '🍲' }
+      ];
+      
+      res.json({ categories, items: products });
+    } else {
+      // Fallback to file system
+      const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
+      res.json(menu);
     }
-    res.json({ success: true, data: menu });
   } catch (error) {
-    console.error('Error fetching menu:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error reading menu:', error);
+    // Fallback to file system
+    try {
+      const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
+      res.json(menu);
+    } catch (fileError) {
+      console.error('Error reading menu file:', fileError);
+      res.status(500).json({ error: 'Failed to load menu' });
+    }
+  }
+});
+
+// Get products by category (public endpoint)
+app.get('/api/products/category/:categoryId', async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const products = await Product.find({ 
+      category: categoryId, 
+      available: true 
+    }).sort({ name: 1 });
+    
+    res.json({ success: true, data: products });
+  } catch (error) {
+    console.error('Error fetching products by category:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
+
+// Get all available products (public endpoint)
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await Product.find({ available: true }).sort({ category: 1, name: 1 });
+    res.json({ success: true, data: products });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Failed to fetch products' });
   }
 });
 
@@ -599,11 +658,33 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
 
 // Product Management Endpoints (Admin)
 
+// Initialize/Populate MongoDB with products
+app.post('/api/admin/populate-products', adminAuth, async (req, res) => {
+  try {
+    const productData = require('./data/productData');
+    
+    // Clear existing products
+    await Product.deleteMany({});
+    
+    // Insert all products
+    const insertedProducts = await Product.insertMany(productData);
+    
+    res.json({ 
+      success: true, 
+      message: `Successfully populated ${insertedProducts.length} products`,
+      data: insertedProducts 
+    });
+  } catch (error) {
+    console.error('Error populating products:', error);
+    res.status(500).json({ error: 'Failed to populate products' });
+  }
+});
+
 // Get all products (admin)
 app.get('/api/admin/products', adminAuth, async (req, res) => {
   try {
-    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
-    res.json({ success: true, data: menu.items });
+    const products = await Product.find({}).sort({ category: 1, name: 1 });
+    res.json({ success: true, data: products });
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ error: 'Failed to fetch products' });
@@ -638,9 +719,7 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid category' });
     }
 
-    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
-    
-    const newProduct = {
+    const newProduct = new Product({
       id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name: name.trim(),
       description: description?.trim() || '',
@@ -648,18 +727,15 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
       category: category?.trim() || '',
       type,
       image: image?.trim() || '',
-      available: available !== false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+      available: available !== false
+    });
 
-    menu.items.push(newProduct);
-    await writeJsonFile(MENU_FILE, menu);
+    const savedProduct = await newProduct.save();
 
     res.status(201).json({ 
       success: true, 
       message: 'Product added successfully',
-      data: newProduct 
+      data: savedProduct 
     });
   } catch (error) {
     console.error('Error adding product:', error);
@@ -674,8 +750,8 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
     const { name, description, price, category, type, image, available } = req.body;
     
     // Validation
-    if (!name || !price || !type || !category) {
-      return res.status(400).json({ error: 'Name, price, type, and category are required' });
+    if (!name || !price || !type) {
+      return res.status(400).json({ error: 'Name, price, and type are required' });
     }
 
     if (price < 0) {
@@ -696,32 +772,28 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
       return res.status(400).json({ error: 'Invalid category' });
     }
 
-    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
-    const productIndex = menu.items.findIndex(item => item.id === productId);
+    const updatedProduct = await Product.findOneAndUpdate(
+      { id: productId },
+      {
+        name: name.trim(),
+        description: description?.trim() || '',
+        price: parseFloat(price),
+        category: category?.trim() || '',
+        type,
+        image: image?.trim() || '',
+        available: available !== false
+      },
+      { new: true }
+    );
     
-    if (productIndex === -1) {
+    if (!updatedProduct) {
       return res.status(404).json({ error: 'Product not found' });
     }
-
-    // Update product
-    menu.items[productIndex] = {
-      ...menu.items[productIndex],
-      name: name.trim(),
-      description: description?.trim() || '',
-      price: parseFloat(price),
-      category: category?.trim() || '',
-      type,
-      image: image?.trim() || '',
-      available: available !== false,
-      updatedAt: new Date().toISOString()
-    };
-
-    await writeJsonFile(MENU_FILE, menu);
 
     res.json({ 
       success: true, 
       message: 'Product updated successfully',
-      data: menu.items[productIndex] 
+      data: updatedProduct 
     });
   } catch (error) {
     console.error('Error updating product:', error);
@@ -734,15 +806,11 @@ app.delete('/api/admin/products/:productId', adminAuth, async (req, res) => {
   try {
     const { productId } = req.params;
     
-    const menu = await readJsonFile(MENU_FILE) || { categories: [], items: [] };
-    const productIndex = menu.items.findIndex(item => item.id === productId);
+    const deletedProduct = await Product.findOneAndDelete({ id: productId });
     
-    if (productIndex === -1) {
+    if (!deletedProduct) {
       return res.status(404).json({ error: 'Product not found' });
     }
-
-    const deletedProduct = menu.items.splice(productIndex, 1)[0];
-    await writeJsonFile(MENU_FILE, menu);
 
     res.json({ 
       success: true, 
