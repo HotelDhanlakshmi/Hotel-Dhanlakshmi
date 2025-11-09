@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+// CORRECT
+import CouponManager from "./CouponManager";
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('overview');
+  // --- MODIFICATION: Set default tab to 'overview' to match your tab array
+  const [activeTab, setActiveTab] = useState('overview'); 
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({
@@ -359,6 +361,8 @@ const AdminDashboard = () => {
                 { id: 'overview', name: 'Overview', icon: '◊' },
                 { id: 'orders', name: 'Orders', icon: '□' },
                 { id: 'products', name: 'Products', icon: '◦' },
+                // --- 1. ADDED COUPONS TAB TO THE ARRAY ---
+                { id: 'coupons', name: 'Coupons', icon: '🏷️' }, 
                 { id: 'settings', name: 'Settings', icon: '⚬' }
               ].map((tab) => (
                 <button
@@ -599,6 +603,11 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* --- 2. ADD THE LOGIC TO RENDER THE COUPON MANAGER --- */}
+            {activeTab === 'coupons' && (
+              <CouponManager />
             )}
 
             {/* Settings Tab */}
