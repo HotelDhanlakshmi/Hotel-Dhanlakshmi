@@ -22,12 +22,45 @@ const orderSchema = new mongoose.Schema({
     quantity: { type: Number, required: true, min: 1 },
     type: { type: String, enum: ['veg', 'non-veg', 'egg'] }
   }],
+
+  // --- MODIFIED SECTION FOR COUPONS ---
+  
+  /**
+   * The price of the cart *before* any discounts.
+   */
+  subtotal: {
+    type: Number,
+    required: true,
+  },
+  
+  /**
+   * The amount of discount applied. (e.g., 50)
+   */
+  discountAmount: {
+    type: Number,
+    default: 0
+  },
+  
+  /**
+   * The coupon code that was used (e.g., "DIWALI20").
+   */
+  couponCode: {
+    type: String,
+    uppercase: true,
+    trim: true
+  },
+
+  /**
+   * The final price the customer has to pay.
+   * (subtotal - discountAmount)
+   */
   total: {
     type: Number,
     required: true,
-    min: 200,
-    max: 2000
+    min: 0,
   },
+  // --- END OF MODIFIED SECTION ---
+
   address: {
     name: { type: String, required: true },
     street: { type: String, required: true },
@@ -37,8 +70,9 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['confirmed', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'cancelled'],
-    default: 'confirmed'
+    // Added 'pending' for when the order is created but not yet paid
+    enum: ['pending', 'confirmed', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'cancelled'],
+    default: 'pending' // Default to pending until payment is confirmed
   },
   paymentMethod: {
     type: String,

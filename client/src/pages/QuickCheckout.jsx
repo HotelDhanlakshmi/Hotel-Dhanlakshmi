@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // Make sure useEffect is imported
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
@@ -7,29 +7,80 @@ const QuickCheckout = () => {
   const navigate = useNavigate();
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
+  // --- 1. ADD NEW STATES FOR COUPON ---
+  const [couponCode, setCouponCode] = useState("");
+  const [discountInfo, setDiscountInfo] = useState(null); // Will store { isValid, newTotal, ... }
+  const [couponError, setCouponError] = useState("");
+  const [isApplying, setIsApplying] = useState(false);
+
+  // --- 2. UPDATE YOUR PRICE CALCULATIONS ---
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryFee = 0;
   const taxes = Math.round(subtotal * 0.05);
-  const total = subtotal + deliveryFee + taxes;
+
+  // 'total' is now dynamic
+  const total = (discountInfo ? discountInfo.newTotal : subtotal) + taxes;
 
   const getTotalItems = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // --- 3. ADD THE "APPLY COUPON" FUNCTION ---
+  const handleApplyCoupon = async () => {
+    setIsApplying(true);
+    setCouponError("");
+    setDiscountInfo(null);
+
+    // Send only the 'id' and 'quantity' to the server
+    const cartItems = cart.map(item => ({
+      id: item.id,
+      quantity: item.quantity
+    }));
+
+    try {
+      const response = await fetch('http://localhost:5000/api/validate-coupon', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cartItems: cartItems,
+          couponCode: couponCode
+        })
+      });
+      const data = await response.json();
+      if (data.isValid) {
+        setDiscountInfo(data);
+      } else {
+        setCouponError(data.error || 'Invalid coupon');
+      }
+    } catch (err) {
+      setCouponError("Could not connect to server.");
+    } finally {
+      setIsApplying(false);
+    }
+  };
+
+  // --- 4. MODIFY 'handlePlaceOrder' ---
   const handlePlaceOrder = async () => {
     setIsPlacingOrder(true);
 
+    // Prepare the raw data for the server
+    const orderData = {
+      mobile: userInfo.mobile,
+      items: cart, // Send full cart items
+      address: userInfo.deliveryAddress,
+      customerName: userInfo.deliveryAddress.name,
+      
+      // --- THIS IS THE KEY CHANGE ---
+      // Send the couponCode. If one was applied, use it.
+      couponCode: discountInfo ? couponCode : null,
+      
+      // --- 'total' IS REMOVED ---
+      // The server will calculate it securely.
+    };
+
+    console.log('Sending order data:', orderData); // Debug log
+
     try {
-      // Create order directly (since user is already verified)
-      const orderData = {
-        mobile: userInfo.mobile,
-        items: cart,
-        total,
-        address: userInfo.deliveryAddress
-      };
-
-      console.log('Sending order data:', orderData); // Debug log
-
       const response = await fetch('http://localhost:5000/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -40,9 +91,9 @@ const QuickCheckout = () => {
       console.log('Order response:', data); // Debug log
 
       if (data.success) {
-        // Clear cart and redirect to order tracking
         dispatch({ type: 'CLEAR_CART' });
-        navigate(`/track-order/${data.data.id}?mobile=${userInfo.mobile}`);
+        // Use data.data.orderId from your server's response
+        navigate(`/track-order/${data.data.orderId}?mobile=${userInfo.mobile}`);
       } else {
         console.error('Order creation failed:', data);
         alert(data.error || 'Failed to place order');
@@ -56,6 +107,7 @@ const QuickCheckout = () => {
   };
 
   if (cart.length === 0) {
+    // ... (your empty cart JSX is fine) ...
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center">
@@ -106,24 +158,63 @@ const QuickCheckout = () => {
               ))}
             </div>
 
-            {/* Price Breakdown */}
+            {/* --- COUPON FORM ADDED HERE --- */}
+            <div className="space-y-3 mb-4 border-t pt-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Apply Coupon
+              </label>
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="Enter coupon code"
+                  className="flex-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                />
+                <button
+                  onClick={handleApplyCoupon}
+                  disabled={isApplying}
+                  className="px-4 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
+                >
+                  {isApplying ? '...' : 'Apply'}
+                </button>
+              </div>
+              {couponError && <p className="text-red-500 text-sm mt-1">{couponError}</p>}
+              {discountInfo && (
+                <p className="text-green-600 text-sm mt-1">
+                  Coupon applied! You saved ₹{discountInfo.discountAmount.toFixed(2)}
+                </p>
+              )}
+            </div>
+
+            {/* --- PRICE BREAKDOWN UPDATED --- */}
             <div className="space-y-3 mb-6 border-t pt-4">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal ({getTotalItems()} items)</span>
-                <span className="font-semibold">₹{subtotal}</span>
+                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
               </div>
+              
+              {/* This part is new */}
+              {discountInfo && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount</span>
+                  <span>- ₹{discountInfo.discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <span className="text-gray-600">Delivery Fee</span>
                 <span className="font-semibold text-green-600">FREE</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Taxes & Fees</span>
-                <span className="font-semibold">₹{taxes}</span>
+                <span className="font-semibold">₹{taxes.toFixed(2)}</span>
               </div>
               <hr />
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Total Amount</span>
-                <span className="font-bold text-orange-600">₹{total}</span>
+                {/* 'total' is now your new dynamic total */}
+                <span className="font-bold text-orange-600">₹{total.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -193,7 +284,7 @@ const QuickCheckout = () => {
               </div>
             </div>
 
-            {/* Place Order Button */}
+            {/* Place Order Button (UPDATED) */}
             <button
               onClick={handlePlaceOrder}
               disabled={isPlacingOrder}
@@ -205,7 +296,8 @@ const QuickCheckout = () => {
                   <span>Placing Order...</span>
                 </div>
               ) : (
-                `Place Order - ₹${total}`
+                // Button text shows the correct dynamic total
+                `Place Order - ₹${total.toFixed(2)}`
               )}
             </button>
 
