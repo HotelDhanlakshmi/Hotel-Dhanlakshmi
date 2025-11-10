@@ -25,7 +25,7 @@ const Hero = () => {
           
           {/* Tagline */}
           <div className="marathi-text text-xl md:text-2xl mb-8 text-yellow-100 bg-black/20 backdrop-blur-sm rounded-lg px-6 py-3 inline-block shadow-traditional">
-             महाराष्ट्रीयन स्वाद • Authentic Maharashtrian Flavors
+             पारंपारिक महाराष्ट्रीयन स्वाद • Authentic Maharashtrian Flavors
           </div>
           
           {/* Description */}
@@ -87,7 +87,7 @@ const Hero = () => {
           
           {/* Traditional Marathi Quote */}
           <div className="marathi-text text-xl text-yellow-200 bg-black/30 backdrop-blur-sm rounded-lg px-6 py-3 inline-block shadow-traditional">
-            "अन्नं ब्रह्म" - Food is Divine ✨
+            "अन्नं हे पूर्ण ब्रह्म" - Food is Divine ✨
           </div>
         </div>
       </div>

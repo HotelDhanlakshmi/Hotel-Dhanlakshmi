@@ -8,6 +8,8 @@ const fs = require('fs').promises;
 const path = require('path');
 const cron = require('node-cron');
 const mongoose = require('mongoose');
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 const whatsappService = require('./services/whatsappService');
 const connectDB = require('./config/database');
 const User = require('./models/User');
@@ -23,6 +25,12 @@ require('dotenv').config();
 connectDB();
 
 const app = express();
+
+// Initialize Razorpay
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET
+});
 const PORT = process.env.PORT || 5000;
 
 // Middleware
@@ -574,6 +582,57 @@ app.post('/api/verify-otp', async (req, res) => {
   } catch (error) {
     console.error('Error verifying OTP:', error);
     res.status(500).json({ error: 'Failed to verify OTP' });
+  }
+});
+
+// Razorpay: Create order
+app.post('/api/create-razorpay-order', async (req, res) => {
+  try {
+    const { amount, currency, receipt } = req.body;
+
+    const options = {
+      amount: amount * 100, // amount in smallest currency unit (paise)
+      currency: currency || 'INR',
+      receipt: receipt || `receipt_${Date.now()}`,
+      payment_capture: 1 // Auto capture payment
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    res.json({
+      success: true,
+      order: {
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        receipt: order.receipt
+      }
+    });
+  } catch (error) {
+    console.error('Razorpay order creation error:', error);
+    res.status(500).json({ error: 'Failed to create Razorpay order' });
+  }
+});
+
+// Razorpay: Verify payment signature
+app.post('/api/verify-razorpay-payment', async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    const sign = razorpay_order_id + '|' + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest('hex');
+
+    if (razorpay_signature === expectedSign) {
+      res.json({ success: true, message: 'Payment verified successfully' });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid signature' });
+    }
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    res.status(500).json({ error: 'Failed to verify payment' });
   }
 });
 

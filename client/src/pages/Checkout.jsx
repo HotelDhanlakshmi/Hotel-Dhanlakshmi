@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
+// Load Razorpay script
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
 const Checkout = () => {
   const { cart, userInfo, dispatch } = useApp();
   const navigate = useNavigate();
@@ -18,19 +29,22 @@ const Checkout = () => {
     );
   }
   
-  const [mobile, setMobile] = useState(userInfo.mobile || '');
-  const [deliveryAddress, setDeliveryAddress] = useState(userInfo.deliveryAddress || {
-    name: '',
-    street: '',
-    city: '',
-    state: 'Maharashtra',
-    pincode: ''
+  // Auto-fill from saved user info
+  const [formData, setFormData] = useState({
+    name: userInfo.deliveryAddress?.name || '',
+    phone: userInfo.mobile || '',
+    address: userInfo.deliveryAddress?.street || '',
+    city: userInfo.deliveryAddress?.city || '',
+    pincode: userInfo.deliveryAddress?.pincode || '',
+    email: userInfo.email || ''
   });
-  const [isLoading, setIsLoading] = useState(false);
+  
   const [errors, setErrors] = useState({});
   const [paymentMethod, setPaymentMethod] = useState('cod');
-  const [deliveryInstructions, setDeliveryInstructions] = useState('');
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryFee = 0; // Free delivery
