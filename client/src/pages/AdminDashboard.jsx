@@ -5,7 +5,7 @@ import CouponManager from "./CouponManager";
 const AdminDashboard = () => {
   const navigate = useNavigate();
   // --- MODIFICATION: Set default tab to 'overview' to match your tab array
-  const [activeTab, setActiveTab] = useState('overview'); 
+  const [activeTab, setActiveTab] = useState('overview');
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [stats, setStats] = useState({
@@ -41,7 +41,7 @@ const AdminDashboard = () => {
     const loginTime = new Date(session.loginTime);
     const now = new Date();
     const hoursDiff = (now - loginTime) / (1000 * 60 * 60);
-    
+
     if (hoursDiff > 24) {
       localStorage.removeItem('admin_session');
       navigate('/admin/login');
@@ -64,15 +64,15 @@ const AdminDashboard = () => {
       if (ordersResponse.ok) {
         const ordersData = await ordersResponse.json();
         setOrders(ordersData.data || []);
-        
+
         // Calculate stats
         const totalOrders = ordersData.data?.length || 0;
-        const pendingOrders = ordersData.data?.filter(order => 
+        const pendingOrders = ordersData.data?.filter(order =>
           ['pending', 'confirmed', 'preparing'].includes(order.status)
         ).length || 0;
-        
+
         const today = new Date().toDateString();
-        const todayRevenue = ordersData.data?.filter(order => 
+        const todayRevenue = ordersData.data?.filter(order =>
           new Date(order.createdAt).toDateString() === today
         ).reduce((sum, order) => sum + (order.totalAmount || 0), 0) || 0;
 
@@ -82,12 +82,12 @@ const AdminDashboard = () => {
             'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
           }
         });
-        
+
         if (productsResponse.ok) {
           const productsData = await productsResponse.json();
           const productsList = productsData.data || [];
           setProducts(productsList);
-          
+
           setStats({
             totalOrders,
             pendingOrders,
@@ -118,7 +118,7 @@ const AdminDashboard = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       console.log('Updating order:', orderId, 'to status:', newStatus);
-      
+
       const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
@@ -133,17 +133,17 @@ const AdminDashboard = () => {
 
       if (response.ok) {
         // Update local state immediately for better UX
-        setOrders(prevOrders => 
-          prevOrders.map(order => 
-            order.id === orderId 
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order.id === orderId
               ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
               : order
           )
         );
-        
+
         // Show success message
         console.log('✅ Order status updated successfully');
-        
+
         // Optionally refresh data from server
         // fetchData();
       } else {
@@ -202,7 +202,7 @@ const AdminDashboard = () => {
 
   const handleProductSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const productData = {
         ...productForm,
@@ -210,10 +210,10 @@ const AdminDashboard = () => {
         id: editingProduct ? editingProduct.id : `item_${Date.now()}`
       };
 
-      const url = editingProduct 
+      const url = editingProduct
         ? `http://localhost:5000/api/admin/products/${editingProduct.id}`
         : 'http://localhost:5000/api/admin/products';
-      
+
       const method = editingProduct ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -303,7 +303,7 @@ const AdminDashboard = () => {
                 <p className="text-sm text-gray-500">Admin Dashboard</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               <button
                 onClick={fetchData}
@@ -337,7 +337,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
@@ -349,7 +349,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
@@ -361,7 +361,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
@@ -380,23 +380,20 @@ const AdminDashboard = () => {
           <div className="border-b border-gray-200">
             <nav className="flex space-x-8 px-6">
               {[
-                { id: 'overview', name: 'Overview', icon: '◊' },
-                { id: 'orders', name: 'Orders', icon: '□' },
-                { id: 'products', name: 'Products', icon: '◦' },
-                // --- 1. ADDED COUPONS TAB TO THE ARRAY ---
-                { id: 'coupons', name: 'Coupons', icon: '🏷️' }, 
-                { id: 'settings', name: 'Settings', icon: '⚬' }
+                { id: 'overview', name: 'Overview' },
+                { id: 'orders', name: 'Orders' },
+                { id: 'products', name: 'Products' },
+                { id: 'coupons', name: 'Coupons' },
+                { id: 'settings', name: 'Settings' }
               ].map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                    activeTab === tab.id
+                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
-                  <span>{tab.icon}</span>
                   <span>{tab.name}</span>
                 </button>
               ))}
@@ -408,7 +405,7 @@ const AdminDashboard = () => {
             {activeTab === 'overview' && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Dashboard Overview</h2>
-                
+
                 {/* Recent Orders */}
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders</h3>
@@ -456,7 +453,7 @@ const AdminDashboard = () => {
             {activeTab === 'orders' && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">All Orders</h2>
-                
+
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -568,11 +565,10 @@ const AdminDashboard = () => {
                             }}
                           />
                           <div className="absolute top-2 right-2">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              product.type === 'veg' ? 'bg-green-100 text-green-800' :
-                              product.type === 'non-veg' ? 'bg-red-100 text-red-800' :
-                              'bg-yellow-100 text-yellow-800'
-                            }`}>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.type === 'veg' ? 'bg-green-100 text-green-800' :
+                                product.type === 'non-veg' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'
+                              }`}>
                               {product.type === 'veg' ? 'VEG' : product.type === 'non-veg' ? 'NON-VEG' : 'EGG'}
                             </span>
                           </div>
@@ -584,17 +580,17 @@ const AdminDashboard = () => {
                             </div>
                           )}
                         </div>
-                        
+
                         <div className="p-4">
                           <div className="flex justify-between items-start mb-2">
                             <h3 className="font-semibold text-gray-800 text-lg">{product.name}</h3>
                             <span className="text-xl font-bold text-green-600">₹{product.price}</span>
                           </div>
-                          
+
                           {product.description && (
                             <p className="text-gray-600 text-sm mb-3 line-clamp-2">{product.description}</p>
                           )}
-                          
+
                           {product.category && (
                             <div className="mb-3">
                               <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
@@ -602,16 +598,16 @@ const AdminDashboard = () => {
                               </span>
                             </div>
                           )}
-                          
+
                           <div className="flex space-x-2">
-                            <button 
+                            <button
                               onClick={() => openProductModal(product)}
                               className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-2 px-3 rounded transition-colors flex items-center justify-center space-x-1"
                             >
                               <span>✎</span>
                               <span>Edit</span>
                             </button>
-                            <button 
+                            <button
                               onClick={() => handleDeleteProduct(product.id)}
                               className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-2 px-3 rounded transition-colors flex items-center justify-center space-x-1"
                             >
@@ -636,7 +632,7 @@ const AdminDashboard = () => {
             {activeTab === 'settings' && (
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
-                
+
                 <div className="space-y-6">
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="font-semibold text-gray-800 mb-2">Restaurant Information</h3>
@@ -727,7 +723,7 @@ const AdminDashboard = () => {
                       type="text"
                       required
                       value={productForm.name}
-                      onChange={(e) => setProductForm({...productForm, name: e.target.value})}
+                      onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter product name"
                     />
@@ -743,7 +739,7 @@ const AdminDashboard = () => {
                       min="0"
                       step="0.01"
                       value={productForm.price}
-                      onChange={(e) => setProductForm({...productForm, price: e.target.value})}
+                      onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter price"
                     />
@@ -756,7 +752,7 @@ const AdminDashboard = () => {
                   </label>
                   <textarea
                     value={productForm.description}
-                    onChange={(e) => setProductForm({...productForm, description: e.target.value})}
+                    onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter product description"
                     rows="3"
@@ -770,7 +766,7 @@ const AdminDashboard = () => {
                     </label>
                     <select
                       value={productForm.category}
-                      onChange={(e) => setProductForm({...productForm, category: e.target.value})}
+                      onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="">Select Category</option>
@@ -799,7 +795,7 @@ const AdminDashboard = () => {
                     <select
                       required
                       value={productForm.type}
-                      onChange={(e) => setProductForm({...productForm, type: e.target.value})}
+                      onChange={(e) => setProductForm({ ...productForm, type: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="veg">Vegetarian</option>
@@ -816,7 +812,7 @@ const AdminDashboard = () => {
                   <input
                     type="url"
                     value={productForm.image}
-                    onChange={(e) => setProductForm({...productForm, image: e.target.value})}
+                    onChange={(e) => setProductForm({ ...productForm, image: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter image URL"
                   />
@@ -839,7 +835,7 @@ const AdminDashboard = () => {
                     type="checkbox"
                     id="available"
                     checked={productForm.available}
-                    onChange={(e) => setProductForm({...productForm, available: e.target.checked})}
+                    onChange={(e) => setProductForm({ ...productForm, available: e.target.checked })}
                     className="mr-2"
                   />
                   <label htmlFor="available" className="text-sm text-gray-700">
