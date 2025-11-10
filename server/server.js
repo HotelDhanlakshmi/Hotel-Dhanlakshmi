@@ -573,7 +573,7 @@ app.post('/api/orders', async (req, res) => {
         subtotal: subtotal,
         discountAmount: discountAmount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
-        totalAmount: newTotal, // This was 'total' before
+        total: newTotal, // This was 'total' before
         
         address,
         estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000)
