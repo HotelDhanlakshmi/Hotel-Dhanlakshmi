@@ -6,6 +6,7 @@ import Menu from './pages/Menu';
 import Cart from './pages/Cart';
 import CheckoutNew from './pages/CheckoutNew';
 import OrderSuccess from './pages/OrderSuccess';
+import CreateAccount from './pages/CreateAccount';
 import OrderTracking from './pages/OrderTracking';
 import TrackOrder from './pages/TrackOrder';
 import UnderProgress from './components/UnderProgress';
@@ -29,6 +30,7 @@ function App() {
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<CheckoutNew />} />
               <Route path="/order-success/:orderId" element={<OrderSuccess />} />
+              <Route path="/create-account" element={<CreateAccount />} />
               <Route path="/track-order/:orderId" element={<OrderTracking />} />
               <Route path="/track-order" element={<TrackOrder />} />
               <Route path="/orders" element={<AllOrders />} />
