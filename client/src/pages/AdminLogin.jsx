@@ -10,16 +10,13 @@ const AdminLogin = () => {
   const [errors, setErrors] = useState({});
   const [sentOtp, setSentOtp] = useState('');
 
-  // Admin mobile numbers (in production, this should be in backend)
-  const ADMIN_MOBILES = ['9876543210', '8765432109']; // Add your admin numbers here
-
   const validateMobile = (mobile) => {
-    return /^[6-9]\d{9}$/.test(mobile) && ADMIN_MOBILES.includes(mobile);
+    return /^[6-9]\d{9}$/.test(mobile);
   };
 
   const handleSendOtp = async () => {
     if (!validateMobile(mobile)) {
-      setErrors({ mobile: 'Invalid admin mobile number' });
+      setErrors({ mobile: 'Please enter a valid 10-digit mobile number' });
       return;
     }
 

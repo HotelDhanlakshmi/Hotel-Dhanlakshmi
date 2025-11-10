@@ -12,10 +12,10 @@ const userSchema = new mongoose.Schema({
     required: true
   },
   address: {
-    street: { type: String, required: true },
-    city: { type: String, required: true },
+    street: { type: String },
+    city: { type: String },
     state: { type: String, default: 'Maharashtra' },
-    pincode: { type: String, required: true, match: /^\d{6}$/ }
+    pincode: { type: String, match: /^\d{6}$/ }
   },
   isVerified: {
     type: Boolean,
@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema({
   },
   isAdmin: {
     type: Boolean,
-    default: false
+    default: false,
+    index: true // Index for faster admin queries
   },
   verifiedAt: {
     type: Date
@@ -36,5 +37,8 @@ const userSchema = new mongoose.Schema({
     type: Date
   }
 });
+
+// Index for faster queries
+userSchema.index({ mobile: 1, isAdmin: 1 });
 
 module.exports = mongoose.model('User', userSchema);

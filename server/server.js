@@ -13,6 +13,7 @@ const connectDB = require('./config/database');
 const User = require('./models/User');
 const Order = require('./models/Order');
 const Product = require('./models/Product');
+const Otp = require('./models/Otp');
 const menuData = require('./data/menuData'); 
 const Coupon = require('./models/coupon'); // Make sure this path is correct
 
@@ -121,12 +122,18 @@ async function isBlacklisted(mobile) {
   return blacklist.includes(mobile);
 }
 
-// Admin mobile numbers (in production, store in database)
-const ADMIN_MOBILES = ['9876543210', '8765432109']; // Add your admin numbers
-
-// Check if mobile is admin
-function isAdminMobile(mobile) {
-  return ADMIN_MOBILES.includes(mobile);
+// Check if mobile is admin (from MongoDB)
+async function isAdminMobile(mobile) {
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const user = await User.findOne({ mobile, isAdmin: true });
+      return !!user;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error checking admin mobile:', error);
+    return false;
+  }
 }
 
 // API Routes
@@ -429,15 +436,30 @@ app.post('/api/send-otp', otpLimiter, async (req, res) => {
     }
 
     const otp = generateOTP();
-    const otpData = await readJsonFile(OTP_FILE) || {};
     
-    otpData[mobile] = {
-      otp,
-      timestamp: Date.now(),
-      attempts: 0
-    };
-
-    await writeJsonFile(OTP_FILE, otpData);
+    // Store OTP in MongoDB
+    if (mongoose.connection.readyState === 1) {
+      // Delete any existing OTP for this mobile
+      await Otp.deleteMany({ mobile, isAdmin: false });
+      
+      // Create new OTP with 5 minute expiry
+      await Otp.create({
+        mobile,
+        otp,
+        isAdmin: false,
+        attempts: 0,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+      });
+    } else {
+      // Fallback to file storage
+      const otpData = await readJsonFile(OTP_FILE) || {};
+      otpData[mobile] = {
+        otp,
+        timestamp: Date.now(),
+        attempts: 0
+      };
+      await writeJsonFile(OTP_FILE, otpData);
+    }
 
     // Send OTP via WhatsApp
     try {
@@ -474,36 +496,79 @@ app.post('/api/verify-otp', async (req, res) => {
       return res.status(400).json({ error: 'Invalid mobile number or OTP' });
     }
 
-    const otpData = await readJsonFile(OTP_FILE) || {};
-    const storedOtpData = otpData[mobile];
+    let storedOtpData = null;
 
-    if (!storedOtpData) {
-      return res.status(400).json({ error: 'OTP not found or expired' });
-    }
+    // Get OTP from MongoDB
+    if (mongoose.connection.readyState === 1) {
+      storedOtpData = await Otp.findOne({ 
+        mobile, 
+        isAdmin: false,
+        isVerified: false 
+      }).sort({ createdAt: -1 });
 
-    // Check if OTP is expired (5 minutes)
-    if (Date.now() - storedOtpData.timestamp > 5 * 60 * 1000) {
+      if (!storedOtpData) {
+        return res.status(400).json({ error: 'OTP not found or expired' });
+      }
+
+      // Check if OTP is expired
+      if (new Date() > storedOtpData.expiresAt) {
+        await Otp.deleteOne({ _id: storedOtpData._id });
+        return res.status(400).json({ error: 'OTP expired' });
+      }
+
+      // Check attempts
+      if (storedOtpData.attempts >= 3) {
+        await Otp.deleteOne({ _id: storedOtpData._id });
+        return res.status(400).json({ error: 'Too many attempts. Please request a new OTP.' });
+      }
+
+      // Verify OTP
+      if (storedOtpData.otp !== otp) {
+        storedOtpData.attempts++;
+        await storedOtpData.save();
+        return res.status(400).json({ error: 'Invalid OTP' });
+      }
+
+      // OTP verified successfully
+      storedOtpData.isVerified = true;
+      await storedOtpData.save();
+
+      // Delete the OTP after successful verification
+      await Otp.deleteOne({ _id: storedOtpData._id });
+
+    } else {
+      // Fallback to file storage
+      const otpData = await readJsonFile(OTP_FILE) || {};
+      storedOtpData = otpData[mobile];
+
+      if (!storedOtpData) {
+        return res.status(400).json({ error: 'OTP not found or expired' });
+      }
+
+      // Check if OTP is expired (5 minutes)
+      if (Date.now() - storedOtpData.timestamp > 5 * 60 * 1000) {
+        delete otpData[mobile];
+        await writeJsonFile(OTP_FILE, otpData);
+        return res.status(400).json({ error: 'OTP expired' });
+      }
+
+      // Check attempts
+      if (storedOtpData.attempts >= 3) {
+        delete otpData[mobile];
+        await writeJsonFile(OTP_FILE, otpData);
+        return res.status(400).json({ error: 'Too many attempts' });
+      }
+
+      if (storedOtpData.otp !== otp) {
+        storedOtpData.attempts++;
+        await writeJsonFile(OTP_FILE, otpData);
+        return res.status(400).json({ error: 'Invalid OTP' });
+      }
+
+      // OTP verified successfully
       delete otpData[mobile];
       await writeJsonFile(OTP_FILE, otpData);
-      return res.status(400).json({ error: 'OTP expired' });
     }
-
-    // Check attempts
-    if (storedOtpData.attempts >= 3) {
-      delete otpData[mobile];
-      await writeJsonFile(OTP_FILE, otpData);
-      return res.status(400).json({ error: 'Too many attempts' });
-    }
-
-    if (storedOtpData.otp !== otp) {
-      storedOtpData.attempts++;
-      await writeJsonFile(OTP_FILE, otpData);
-      return res.status(400).json({ error: 'Invalid OTP' });
-    }
-
-    // OTP verified successfully
-    delete otpData[mobile];
-    await writeJsonFile(OTP_FILE, otpData);
 
     res.json({ success: true, message: 'OTP verified successfully' });
   } catch (error) {
@@ -684,24 +749,43 @@ app.post('/api/admin/send-otp', otpLimiter, async (req, res) => {
     const { mobile } = req.body;
 
     if (!mobile || !isValidMobile(mobile)) {
-      return res.status(400).json({ error: 'Invalid mobile number' });
+      return res.status(400).json({ error: 'Invalid mobile number format' });
     }
 
-    if (!isAdminMobile(mobile)) {
-      return res.status(403).json({ error: 'Not authorized as admin' });
+    // Check if mobile is admin from MongoDB
+    const isAdmin = await isAdminMobile(mobile);
+    if (!isAdmin) {
+      return res.status(403).json({ 
+        error: 'Unauthorized: This mobile number is not registered as an admin. Please enter the correct admin mobile number.' 
+      });
     }
 
     const otp = generateOTP();
-    const otpData = await readJsonFile(OTP_FILE) || {};
     
-    otpData[`admin_${mobile}`] = {
-      otp,
-      timestamp: Date.now(),
-      attempts: 0,
-      isAdmin: true
-    };
-
-    await writeJsonFile(OTP_FILE, otpData);
+    // Store OTP in MongoDB
+    if (mongoose.connection.readyState === 1) {
+      // Delete any existing OTP for this mobile
+      await Otp.deleteMany({ mobile, isAdmin: true });
+      
+      // Create new OTP with 5 minute expiry
+      await Otp.create({
+        mobile,
+        otp,
+        isAdmin: true,
+        attempts: 0,
+        expiresAt: new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
+      });
+    } else {
+      // Fallback to file storage
+      const otpData = await readJsonFile(OTP_FILE) || {};
+      otpData[`admin_${mobile}`] = {
+        otp,
+        timestamp: Date.now(),
+        attempts: 0,
+        isAdmin: true
+      };
+      await writeJsonFile(OTP_FILE, otpData);
+    }
 
     // Send OTP via WhatsApp for admin
     try {
@@ -734,40 +818,93 @@ app.post('/api/admin/verify-otp', async (req, res) => {
       return res.status(400).json({ error: 'Invalid mobile number or OTP' });
     }
 
-    if (!isAdminMobile(mobile)) {
-      return res.status(403).json({ error: 'Not authorized as admin' });
+    // Check if mobile is admin from MongoDB
+    const isAdmin = await isAdminMobile(mobile);
+    if (!isAdmin) {
+      return res.status(403).json({ 
+        error: 'Unauthorized: This mobile number is not registered as an admin.' 
+      });
     }
 
-    const otpData = await readJsonFile(OTP_FILE) || {};
-    const storedOtpData = otpData[`admin_${mobile}`];
+    let storedOtpData = null;
 
-    if (!storedOtpData || !storedOtpData.isAdmin) {
-      return res.status(400).json({ error: 'Admin OTP not found or expired' });
-    }
+    // Get OTP from MongoDB
+    if (mongoose.connection.readyState === 1) {
+      storedOtpData = await Otp.findOne({ 
+        mobile, 
+        isAdmin: true,
+        isVerified: false 
+      }).sort({ createdAt: -1 });
 
-    // Check if OTP is expired (5 minutes)
-    if (Date.now() - storedOtpData.timestamp > 5 * 60 * 1000) {
+      if (!storedOtpData) {
+        return res.status(400).json({ error: 'Admin OTP not found or expired' });
+      }
+
+      // Check if OTP is expired (handled by MongoDB TTL, but double check)
+      if (new Date() > storedOtpData.expiresAt) {
+        await Otp.deleteOne({ _id: storedOtpData._id });
+        return res.status(400).json({ error: 'OTP expired' });
+      }
+
+      // Check attempts
+      if (storedOtpData.attempts >= 3) {
+        await Otp.deleteOne({ _id: storedOtpData._id });
+        return res.status(400).json({ error: 'Too many attempts. Please request a new OTP.' });
+      }
+
+      // Verify OTP
+      if (storedOtpData.otp !== otp) {
+        storedOtpData.attempts++;
+        await storedOtpData.save();
+        return res.status(400).json({ error: 'Invalid OTP' });
+      }
+
+      // OTP verified successfully
+      storedOtpData.isVerified = true;
+      await storedOtpData.save();
+
+      // Update user's last login
+      await User.findOneAndUpdate(
+        { mobile },
+        { lastLoginAt: new Date() }
+      );
+
+      // Delete the OTP after successful verification
+      await Otp.deleteOne({ _id: storedOtpData._id });
+
+    } else {
+      // Fallback to file storage
+      const otpData = await readJsonFile(OTP_FILE) || {};
+      storedOtpData = otpData[`admin_${mobile}`];
+
+      if (!storedOtpData || !storedOtpData.isAdmin) {
+        return res.status(400).json({ error: 'Admin OTP not found or expired' });
+      }
+
+      // Check if OTP is expired (5 minutes)
+      if (Date.now() - storedOtpData.timestamp > 5 * 60 * 1000) {
+        delete otpData[`admin_${mobile}`];
+        await writeJsonFile(OTP_FILE, otpData);
+        return res.status(400).json({ error: 'OTP expired' });
+      }
+
+      // Check attempts
+      if (storedOtpData.attempts >= 3) {
+        delete otpData[`admin_${mobile}`];
+        await writeJsonFile(OTP_FILE, otpData);
+        return res.status(400).json({ error: 'Too many attempts' });
+      }
+
+      if (storedOtpData.otp !== otp) {
+        storedOtpData.attempts++;
+        await writeJsonFile(OTP_FILE, otpData);
+        return res.status(400).json({ error: 'Invalid OTP' });
+      }
+
+      // OTP verified successfully
       delete otpData[`admin_${mobile}`];
       await writeJsonFile(OTP_FILE, otpData);
-      return res.status(400).json({ error: 'OTP expired' });
     }
-
-    // Check attempts
-    if (storedOtpData.attempts >= 3) {
-      delete otpData[`admin_${mobile}`];
-      await writeJsonFile(OTP_FILE, otpData);
-      return res.status(400).json({ error: 'Too many attempts' });
-    }
-
-    if (storedOtpData.otp !== otp) {
-      storedOtpData.attempts++;
-      await writeJsonFile(OTP_FILE, otpData);
-      return res.status(400).json({ error: 'Invalid OTP' });
-    }
-
-    // OTP verified successfully - generate admin token
-    delete otpData[`admin_${mobile}`];
-    await writeJsonFile(OTP_FILE, otpData);
 
     const adminToken = `admin_${mobile}_${Date.now()}`;
 
