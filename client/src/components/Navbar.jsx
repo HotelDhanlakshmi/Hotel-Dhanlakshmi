@@ -5,8 +5,16 @@ import { useApp } from '../context/AppContext';
 const Navbar = () => {
   const { cart } = useApp();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Check if admin is logged in
+  const isAdminLoggedIn = !!localStorage.getItem('admin_session');
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+  // Don't show navbar for admin users
+  if (isAdminLoggedIn) {
+    return null;
+  }
 
   return (
     <nav className="bg-white shadow-lg sticky top-0 z-50">

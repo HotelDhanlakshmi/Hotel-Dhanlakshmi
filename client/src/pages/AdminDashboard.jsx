@@ -112,7 +112,7 @@ const AdminDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('admin_session');
-    navigate('/admin/login');
+    navigate('/', { replace: true });
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
