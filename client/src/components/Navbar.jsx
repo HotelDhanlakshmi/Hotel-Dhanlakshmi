@@ -40,7 +40,7 @@ const Navbar = () => {
               <h1 className="text-xl font-bold text-gray-800">
                 <span className="marathi-heading text-orange-600">हॉटेल धनलक्ष्मी</span>
               </h1>
-              <p className="text-xs text-gray-500 marathi-text">प्रामाणिक महाराष्ट्रीयन स्वाद</p>
+              <p className="text-xs text-gray-500 marathi-text">पारंपारिक महाराष्ट्रीयन स्वाद</p>
             </div>
           </Link>
 
