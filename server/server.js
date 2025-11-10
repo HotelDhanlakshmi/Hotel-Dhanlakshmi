@@ -14,7 +14,7 @@ const User = require('./models/User');
 const Order = require('./models/Order');
 const Product = require('./models/Product');
 const Otp = require('./models/Otp');
-const menuData = require('./data/menuData'); 
+const menuData = require('./data/menuData');
 const Coupon = require('./models/coupon'); // Make sure this path is correct
 
 require('dotenv').config();
@@ -64,7 +64,7 @@ const MENU_FILE = path.join(DATA_DIR, 'menu.json');
 async function initializeData() {
   try {
     await fs.mkdir(DATA_DIR, { recursive: true });
-    
+
     // Initialize files if they don't exist
     const files = [
       { path: ORDERS_FILE, data: [] },
@@ -143,7 +143,7 @@ app.get('/api/menu', async (req, res) => {
   try {
     // Try MongoDB first
     const products = await Product.find({ available: true }).sort({ category: 1, name: 1 });
-    
+
     if (products.length > 0) {
       // Group products by category for frontend compatibility
       const categories = [
@@ -163,7 +163,7 @@ app.get('/api/menu', async (req, res) => {
         { id: 'beverages', name: 'Beverages', icon: '🥤' },
         { id: 'soups', name: 'Soups', icon: '🍲' }
       ];
-      
+
       res.json({ categories, items: products });
     } else {
       // Fallback to file system
@@ -187,11 +187,11 @@ app.get('/api/menu', async (req, res) => {
 app.get('/api/products/category/:categoryId', async (req, res) => {
   try {
     const { categoryId } = req.params;
-    const products = await Product.find({ 
-      category: categoryId, 
-      available: true 
+    const products = await Product.find({
+      category: categoryId,
+      available: true
     }).sort({ name: 1 });
-    
+
     res.json({ success: true, data: products });
   } catch (error) {
     console.error('Error fetching products by category:', error);
@@ -273,9 +273,9 @@ app.get('/api/admin/coupons', async (req, res) => {
   try {
     // Find all coupons in the database and sort by most recently created
     const coupons = await Coupon.find({}).sort({ createdAt: -1 });
-    
+
     res.status(200).json({ success: true, data: coupons });
-    
+
   } catch (error) {
     console.error('Error fetching coupons:', error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -290,16 +290,16 @@ app.get('/api/admin/coupons', async (req, res) => {
 app.delete('/api/admin/coupons/:id', async (req, res) => {
   try {
     const { id } = req.params; // This 'id' is the MongoDB _id
-    
+
     const deletedCoupon = await Coupon.findByIdAndDelete(id);
-    
+
     if (!deletedCoupon) {
       return res.status(404).json({ message: 'Coupon not found' });
     }
-    
+
     // Send a simple success message
     res.status(200).json({ success: true, message: 'Coupon deleted' });
-    
+
   } catch (error) {
     console.error('Error deleting coupon:', error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -318,7 +318,7 @@ async function calculateFinalAmount(cartItems, couponCode) {
   try {
     // 1. "Hydrate" the cart with data from your database
     const productIds = cartItems.map(item => item.id);
-    
+
     // --- FIX 1: Query against your 'id' field, not '_id' ---
     const productsFromDB = await Product.find({ id: { $in: productIds } });
 
@@ -326,7 +326,7 @@ async function calculateFinalAmount(cartItems, couponCode) {
     const productMap = {};
     productsFromDB.forEach(p => {
       // --- FIX 2: Use 'p.id' as the key, not 'p._id' ---
-      productMap[p.id] = { 
+      productMap[p.id] = {
         price: p.price,
         category: p.category
       };
@@ -357,7 +357,7 @@ async function calculateFinalAmount(cartItems, couponCode) {
     if (!coupon) return { isValid: false, error: 'Invalid coupon code' };
     if (coupon.uses >= coupon.limit) return { isValid: false, error: 'Coupon has expired' };
     if (subtotal < coupon.minOrder) return { isValid: false, error: `Minimum order of ₹${coupon.minOrder} required` };
-    
+
     // 5. Calculate the discount
     let totalDiscount = 0;
     if (coupon.appliesTo === 'cart') {
@@ -410,10 +410,10 @@ async function calculateFinalAmount(cartItems, couponCode) {
 app.post('/api/validate-coupon', async (req, res) => {
   try {
     const { cartItems, couponCode } = req.body;
-    
+
     // Use the calculation engine
     const result = await calculateFinalAmount(cartItems, couponCode);
-    
+
     res.json(result);
 
   } catch (error) {
@@ -436,12 +436,12 @@ app.post('/api/send-otp', otpLimiter, async (req, res) => {
     }
 
     const otp = generateOTP();
-    
+
     // Store OTP in MongoDB
     if (mongoose.connection.readyState === 1) {
       // Delete any existing OTP for this mobile
       await Otp.deleteMany({ mobile, isAdmin: false });
-      
+
       // Create new OTP with 5 minute expiry
       await Otp.create({
         mobile,
@@ -475,8 +475,8 @@ app.post('/api/send-otp', otpLimiter, async (req, res) => {
       // Continue even if WhatsApp fails - OTP is stored for verification
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'OTP sent successfully via WhatsApp',
       // Show OTP in development mode only
       otp: process.env.NODE_ENV === 'development' ? otp : undefined
@@ -500,10 +500,10 @@ app.post('/api/verify-otp', async (req, res) => {
 
     // Get OTP from MongoDB
     if (mongoose.connection.readyState === 1) {
-      storedOtpData = await Otp.findOne({ 
-        mobile, 
+      storedOtpData = await Otp.findOne({
+        mobile,
         isAdmin: false,
-        isVerified: false 
+        isVerified: false
       }).sort({ createdAt: -1 });
 
       if (!storedOtpData) {
@@ -584,7 +584,7 @@ app.post('/api/verify-otp', async (req, res) => {
 app.post('/api/orders', async (req, res) => {
   try {
     const { mobile, items, address, couponCode } = req.body; // <-- 1. ADDED couponCode
-    
+
     // --- 2. SECURELY CALCULATE PRICE ---
     // We are IGNORING the 'total' that comes from the frontend
     const { isValid, newTotal, discountAmount, subtotal, error } = await calculateFinalAmount(items, couponCode);
@@ -594,7 +594,7 @@ app.post('/api/orders', async (req, res) => {
       // We will stop the order, just like your other validations
       return res.status(400).json({ error: error || 'Invalid coupon' });
     }
-    
+
     // We now have the secure totals:
     // subtotal = price before discount
     // newTotal = final price to charge
@@ -607,7 +607,7 @@ app.post('/api/orders', async (req, res) => {
       return res.status(400).json({ error: 'Invalid mobile number' });
     }
     // ... (all your other validations for blacklist, address, etc. remain the same) ...
-    
+
     // --- 4. MODIFY YOUR TOTALS VALIDATION ---
     // We now check against the *newTotal*
     if (!newTotal || newTotal < 200) {
@@ -633,18 +633,18 @@ app.post('/api/orders', async (req, res) => {
         mobile,
         customerName: address.name,
         items,
-        
+
         // --- Use the new secure values ---
         subtotal: subtotal,
         discountAmount: discountAmount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
         total: newTotal, // This was 'total' before
-        
+
         address,
         estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000)
         // Your schema default for 'status' will be used ('pending' or 'confirmed')
       });
-      
+
       // --- 6. INCREMENT COUPON COUNT ---
       // This is safe to do *if* you are not taking online payment.
       // If this is Cash on Delivery, the "payment" is confirmed now.
@@ -665,8 +665,8 @@ app.post('/api/orders', async (req, res) => {
 
     // ... (your WhatsApp service logic remains the same) ...
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       message: 'Order created successfully',
       data: order // 'order' is now the full mongoose document
     });
@@ -710,13 +710,13 @@ app.get('/api/orders/mobile/:mobile', async (req, res) => {
     }
 
     let userOrders = [];
-    
+
     if (mongoose.connection.readyState === 1) {
       // MongoDB is connected
       userOrders = await Order.find({ mobile })
         .sort({ createdAt: -1 }) // Most recent first
         .lean();
-      
+
       // Convert MongoDB format to frontend format
       userOrders = userOrders.map(order => ({
         id: order.orderId,
@@ -755,18 +755,18 @@ app.post('/api/admin/send-otp', otpLimiter, async (req, res) => {
     // Check if mobile is admin from MongoDB
     const isAdmin = await isAdminMobile(mobile);
     if (!isAdmin) {
-      return res.status(403).json({ 
-        error: 'Unauthorized: This mobile number is not registered as an admin. Please enter the correct admin mobile number.' 
+      return res.status(403).json({
+        error: 'Unauthorized: This mobile number is not registered as an admin. Please enter the correct admin mobile number.'
       });
     }
 
     const otp = generateOTP();
-    
+
     // Store OTP in MongoDB
     if (mongoose.connection.readyState === 1) {
       // Delete any existing OTP for this mobile
       await Otp.deleteMany({ mobile, isAdmin: true });
-      
+
       // Create new OTP with 5 minute expiry
       await Otp.create({
         mobile,
@@ -799,8 +799,8 @@ app.post('/api/admin/send-otp', otpLimiter, async (req, res) => {
       console.error('Admin WhatsApp send failed:', whatsappError.message);
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Admin OTP sent successfully',
       otp: process.env.NODE_ENV === 'development' ? otp : undefined
     });
@@ -821,8 +821,8 @@ app.post('/api/admin/verify-otp', async (req, res) => {
     // Check if mobile is admin from MongoDB
     const isAdmin = await isAdminMobile(mobile);
     if (!isAdmin) {
-      return res.status(403).json({ 
-        error: 'Unauthorized: This mobile number is not registered as an admin.' 
+      return res.status(403).json({
+        error: 'Unauthorized: This mobile number is not registered as an admin.'
       });
     }
 
@@ -830,10 +830,10 @@ app.post('/api/admin/verify-otp', async (req, res) => {
 
     // Get OTP from MongoDB
     if (mongoose.connection.readyState === 1) {
-      storedOtpData = await Otp.findOne({ 
-        mobile, 
+      storedOtpData = await Otp.findOne({
+        mobile,
         isAdmin: true,
-        isVerified: false 
+        isVerified: false
       }).sort({ createdAt: -1 });
 
       if (!storedOtpData) {
@@ -908,8 +908,8 @@ app.post('/api/admin/verify-otp', async (req, res) => {
 
     const adminToken = `admin_${mobile}_${Date.now()}`;
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Admin OTP verified successfully',
       token: adminToken,
       mobile: mobile
@@ -933,13 +933,13 @@ const adminAuth = (req, res, next) => {
 app.get('/api/admin/orders', adminAuth, async (req, res) => {
   try {
     let orders = [];
-    
+
     if (mongoose.connection.readyState === 1) {
       // MongoDB is connected
       orders = await Order.find({})
         .sort({ createdAt: -1 }) // Most recent first
         .lean();
-      
+
       // Convert MongoDB format to frontend format
       orders = orders.map(order => ({
         id: order.orderId,
@@ -957,7 +957,7 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
       // Fallback to file storage
       orders = await readJsonFile(ORDERS_FILE) || [];
     }
-    
+
     res.json({ success: true, data: orders });
   } catch (error) {
     console.error('Error fetching admin orders:', error);
@@ -971,17 +971,17 @@ app.get('/api/admin/orders', adminAuth, async (req, res) => {
 app.post('/api/admin/populate-products', adminAuth, async (req, res) => {
   try {
     const productData = require('./data/productData');
-    
+
     // Clear existing products
     await Product.deleteMany({});
-    
+
     // Insert all products
     const insertedProducts = await Product.insertMany(productData);
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: `Successfully populated ${insertedProducts.length} products`,
-      data: insertedProducts 
+      data: insertedProducts
     });
   } catch (error) {
     console.error('Error populating products:', error);
@@ -1004,7 +1004,7 @@ app.get('/api/admin/products', adminAuth, async (req, res) => {
 app.post('/api/admin/products', adminAuth, async (req, res) => {
   try {
     const { name, description, price, category, type, image, available } = req.body;
-    
+
     // Validation
     if (!name || !price || !type) {
       return res.status(400).json({ error: 'Name, price, and type are required' });
@@ -1023,7 +1023,7 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
       'starters', 'biryani', 'chinese-veg', 'chinese-non-veg', 'veg-main-course',
       'tandoori-kabab', 'sp-thali', 'beverages', 'soups'
     ];
-    
+
     if (category && !validCategories.includes(category)) {
       return res.status(400).json({ error: 'Invalid category' });
     }
@@ -1041,10 +1041,10 @@ app.post('/api/admin/products', adminAuth, async (req, res) => {
 
     const savedProduct = await newProduct.save();
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       message: 'Product added successfully',
-      data: savedProduct 
+      data: savedProduct
     });
   } catch (error) {
     console.error('Error adding product:', error);
@@ -1057,7 +1057,7 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
   try {
     const { productId } = req.params;
     const { name, description, price, category, type, image, available } = req.body;
-    
+
     // Validation
     if (!name || !price || !type) {
       return res.status(400).json({ error: 'Name, price, and type are required' });
@@ -1076,7 +1076,7 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
       'starters', 'biryani', 'chinese-veg', 'chinese-non-veg', 'veg-main-course',
       'tandoori-kabab', 'sp-thali', 'beverages', 'soups'
     ];
-    
+
     if (category && !validCategories.includes(category)) {
       return res.status(400).json({ error: 'Invalid category' });
     }
@@ -1094,15 +1094,15 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
       },
       { new: true }
     );
-    
+
     if (!updatedProduct) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Product updated successfully',
-      data: updatedProduct 
+      data: updatedProduct
     });
   } catch (error) {
     console.error('Error updating product:', error);
@@ -1114,17 +1114,17 @@ app.put('/api/admin/products/:productId', adminAuth, async (req, res) => {
 app.delete('/api/admin/products/:productId', adminAuth, async (req, res) => {
   try {
     const { productId } = req.params;
-    
+
     const deletedProduct = await Product.findOneAndDelete({ id: productId });
-    
+
     if (!deletedProduct) {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Product deleted successfully',
-      data: deletedProduct 
+      data: deletedProduct
     });
   } catch (error) {
     console.error('Error deleting product:', error);
@@ -1138,27 +1138,66 @@ app.put('/api/orders/:orderId/status', adminAuth, async (req, res) => {
     const { orderId } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['confirmed', 'preparing', 'ready', 'out-for-delivery', 'delivered'];
+    const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'out-for-delivery', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
-    const orders = await readJsonFile(ORDERS_FILE) || [];
-    const orderIndex = orders.findIndex(o => o.id === orderId);
+    let updatedOrder = null;
 
-    if (orderIndex === -1) {
-      return res.status(404).json({ error: 'Order not found' });
+    // Update in MongoDB
+    if (mongoose.connection.readyState === 1) {
+      updatedOrder = await Order.findOneAndUpdate(
+        { orderId: orderId },
+        {
+          status: status,
+          updatedAt: new Date(),
+          // If status is delivered, set deliveredAt
+          ...(status === 'delivered' && { deliveredAt: new Date() })
+        },
+        { new: true } // Return updated document
+      );
+
+      if (!updatedOrder) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      // Send WhatsApp notification for status update
+      try {
+        if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.NODE_ENV === 'production') {
+          await whatsappService.sendStatusUpdate(updatedOrder.mobile, orderId, status);
+          console.log(`Status update notification sent to ${updatedOrder.mobile}`);
+        } else {
+          console.log(`📱 Status update for order ${orderId}: ${status} (WhatsApp disabled in dev mode)`);
+        }
+      } catch (whatsappError) {
+        console.error('WhatsApp notification failed:', whatsappError.message);
+        // Continue even if WhatsApp fails
+      }
+
+    } else {
+      // Fallback to file storage
+      const orders = await readJsonFile(ORDERS_FILE) || [];
+      const orderIndex = orders.findIndex(o => o.id === orderId);
+
+      if (orderIndex === -1) {
+        return res.status(404).json({ error: 'Order not found' });
+      }
+
+      orders[orderIndex].status = status;
+      orders[orderIndex].updatedAt = new Date().toISOString();
+      if (status === 'delivered') {
+        orders[orderIndex].deliveredAt = new Date().toISOString();
+      }
+
+      await writeJsonFile(ORDERS_FILE, orders);
+      updatedOrder = orders[orderIndex];
     }
 
-    orders[orderIndex].status = status;
-    orders[orderIndex].updatedAt = new Date().toISOString();
-
-    await writeJsonFile(ORDERS_FILE, orders);
-
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Order status updated successfully',
-      data: orders[orderIndex]
+      data: updatedOrder
     });
   } catch (error) {
     console.error('Error updating order status:', error);
@@ -1183,23 +1222,23 @@ app.get('/api/webhook/whatsapp', (req, res) => {
 // WhatsApp webhook for receiving messages
 app.post('/api/webhook/whatsapp', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['x-hub-signature-256'];
-  
+
   if (!whatsappService.verifyWebhook(signature, req.body)) {
     return res.status(403).send('Forbidden');
   }
 
   const body = JSON.parse(req.body);
-  
+
   // Handle incoming WhatsApp messages here
   console.log('WhatsApp webhook received:', JSON.stringify(body, null, 2));
-  
+
   res.status(200).send('OK');
 });
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'Hotel Dhanlakshmi API is running',
     timestamp: new Date().toISOString(),
     whatsapp: {
@@ -1246,7 +1285,7 @@ cron.schedule('0 * * * *', async () => {
 // Start server
 async function startServer() {
   await initializeData();
-  
+
   app.listen(PORT, () => {
     console.log(`🍽️ Hotel Dhanlakshmi API Server running on port ${PORT}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);

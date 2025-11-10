@@ -117,6 +117,8 @@ const AdminDashboard = () => {
 
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
+      console.log('Updating order:', orderId, 'to status:', newStatus);
+      
       const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
@@ -126,13 +128,33 @@ const AdminDashboard = () => {
         body: JSON.stringify({ status: newStatus })
       });
 
+      const data = await response.json();
+      console.log('Update response:', data);
+
       if (response.ok) {
-        fetchData(); // Refresh data
+        // Update local state immediately for better UX
+        setOrders(prevOrders => 
+          prevOrders.map(order => 
+            order.id === orderId 
+              ? { ...order, status: newStatus, updatedAt: new Date().toISOString() }
+              : order
+          )
+        );
+        
+        // Show success message
+        console.log('✅ Order status updated successfully');
+        
+        // Optionally refresh data from server
+        // fetchData();
       } else {
-        alert('Failed to update order status');
+        console.error('Failed to update order status:', data.error);
+        alert(`Failed to update order status: ${data.error || 'Unknown error'}`);
+        // Refresh to revert the change
+        fetchData();
       }
     } catch (error) {
-      alert('Error updating order status');
+      console.error('Error updating order status:', error);
+      alert('Network error: Unable to update order status');
     }
   };
 
