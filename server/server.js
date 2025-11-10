@@ -869,6 +869,62 @@ app.post('/api/admin/send-otp', otpLimiter, async (req, res) => {
   }
 });
 
+// Admin Login with Password
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { mobile, password } = req.body;
+
+    if (!mobile || !isValidMobile(mobile)) {
+      return res.status(400).json({ error: 'Invalid mobile number' });
+    }
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    // Check if mobile is admin from MongoDB
+    const isAdmin = await isAdminMobile(mobile);
+    if (!isAdmin) {
+      return res.status(403).json({ 
+        error: 'Unauthorized: This mobile number is not registered as an admin.' 
+      });
+    }
+
+    // Get admin user
+    const adminUser = await User.findOne({ mobile, isAdmin: true });
+    
+    if (!adminUser) {
+      return res.status(403).json({ error: 'Invalid credentials' });
+    }
+
+    // For now, use a simple password check
+    // In production, you should hash passwords with bcrypt
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+    
+    if (password !== ADMIN_PASSWORD) {
+      return res.status(403).json({ error: 'Invalid credentials' });
+    }
+
+    // Update user's last login
+    await User.findOneAndUpdate(
+      { mobile },
+      { lastLoginAt: new Date() }
+    );
+
+    const adminToken = `admin_${mobile}_${Date.now()}`;
+
+    res.json({ 
+      success: true, 
+      message: 'Admin login successful',
+      token: adminToken,
+      mobile: mobile
+    });
+  } catch (error) {
+    console.error('Error in admin login:', error);
+    res.status(500).json({ error: 'Failed to login' });
+  }
+});
+
 app.post('/api/admin/verify-otp', async (req, res) => {
   try {
     const { mobile, otp } = req.body;
