@@ -9,7 +9,7 @@ const ContactPage = () => {
     subject: '',
     message: '',
   });
-  
+
   // --- State for submission ---
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formStatus, setFormStatus] = useState(null); // null, 'success', or 'error'
@@ -60,10 +60,10 @@ const ContactPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-16 px-4">
       <div className="max-w-7xl mx-auto">
-        
+
         {/* --- Header Section --- */}
         <div className="text-center mb-12">
-           <div className="marathi-heading text-3xl md:text-4xl mb-4 gradient-text">
+          <div className="marathi-heading text-3xl md:text-4xl mb-4 gradient-text">
             📞 आमच्याशी संपर्क साधा 📞
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-6">
@@ -79,12 +79,12 @@ const ContactPage = () => {
 
         {/* --- Main Content: Form & Details --- */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          
+
           {/* --- Column 1: Contact Form --- */}
           <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
             <h3 className="text-2xl font-semibold text-gray-800 mb-6">Send us a Message</h3>
             <form onSubmit={handleSubmit} className="space-y-5">
-               <div>
+              <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name (पूर्ण नाव)</label>
                 <input
                   type="text"
@@ -154,7 +154,7 @@ const ContactPage = () => {
                   {isSubmitting ? 'Sending...' : 'Send Message (संदेश पाठवा)'}
                 </button>
               </div>
-              
+
               {/* --- Show success or error messages --- */}
               {formStatus === 'success' && (
                 <p className="text-green-600 text-center">
@@ -172,21 +172,21 @@ const ContactPage = () => {
 
           {/* --- Column 2: Contact Details --- */}
           <div className="space-y-8">
-             <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
+            <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Our Address</h3>
               <p className="text-lg text-gray-600 mb-4">
-                Nagar Manmad Road, SH 10, 
+                Nagar Manmad Road, SH 10,
                 <br />
                 Rahuri Factory, Maharashtra 413706
               </p>
-              <a 
+              <a
                 href="#map-location"
                 className="font-semibold text-orange-600 hover:underline"
               >
                 Get Directions (दिशा-निर्देश मिळवा) →
               </a>
             </div>
-            
+
             <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
               <h3 className="text-2xl font-semibold text-gray-800 mb-4">Call Us</h3>
               <p className="text-lg text-gray-600 mb-2">
@@ -201,24 +201,37 @@ const ContactPage = () => {
 
         {/* --- Map Section --- */}
         <div id="map-location" className="mt-16">
-           <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
+          <div className="maharashtrian-card bg-white p-8 rounded-xl shadow-traditional">
             <div className="text-center mb-6">
               <h2 className="text-3xl font-bold text-gray-800 mb-2">Find Us Here</h2>
               <div className="marathi-heading text-xl text-orange-600">
                 आमचे स्थान
               </div>
             </div>
-            
-            <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden relative">
-              <iframe 
-                src="http://googleusercontent.com/maps/google.com/2" 
-                width="100%" 
-                height="450" 
-                style={{ border: 0 }} 
-                allowFullScreen={true} 
-                loading="lazy" 
+
+            <div className="w-full rounded-lg overflow-hidden shadow-lg">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3742.9342049029583!2d74.4395874!3d20.2615633!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bdc25ba69a61b87%3A0xcd372971a493642!2sMH%20SH%2010%20%26%20Nagar%20Manmad%20Hwy%2C%20Bardiya%20Nagar%2C%20Manmad%2C%20Maharashtra%20423104!5e0!3m2!1sen!2sin!4v1762800563042!5m2!1sen!2sin"
+                width="100%"
+                height="450"
+                style={{ border: 0 }}
+                allowFullScreen={true}
+                loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
+                title="Hotel Dhanlakshmi Location - Kopargaon, Maharashtra"
               ></iframe>
+            </div>
+
+            <div className="mt-6 text-center">
+              <a
+                href="https://maps.app.goo.gl/6oKTuajce6rayvCRA"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-2 bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors shadow-md hover:shadow-lg"
+              >
+                <span>📍</span>
+                <span>Open in Google Maps</span>
+              </a>
             </div>
           </div>
         </div>
