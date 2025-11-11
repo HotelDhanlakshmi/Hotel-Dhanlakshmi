@@ -124,7 +124,7 @@ const CheckoutNew = () => {
 
     setCouponLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/validate-coupon', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/validate-coupon`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -159,7 +159,7 @@ const CheckoutNew = () => {
   const handleRazorpayPayment = async (orderData) => {
     try {
       // Create order on backend
-      const response = await fetch('http://localhost:5000/api/create-razorpay-order', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/create-razorpay-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -215,7 +215,7 @@ const CheckoutNew = () => {
 
   const createOrder = async (orderDetails) => {
     try {
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

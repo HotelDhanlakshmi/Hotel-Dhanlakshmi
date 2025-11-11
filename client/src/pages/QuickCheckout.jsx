@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'; // Make sure useEffect is imported
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const QuickCheckout = () => {
   const { cart, userInfo, dispatch } = useApp();
   const navigate = useNavigate();
@@ -38,7 +40,7 @@ const QuickCheckout = () => {
     }));
 
     try {
-      const response = await fetch('http://localhost:5000/api/validate-coupon', {
+      const response = await fetch(`${API_URL}/api/validate-coupon`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -81,7 +83,7 @@ const QuickCheckout = () => {
     console.log('Sending order data:', orderData); // Debug log
 
     try {
-      const response = await fetch('http://localhost:5000/api/orders', {
+      const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(orderData)

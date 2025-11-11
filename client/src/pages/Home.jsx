@@ -4,6 +4,8 @@ import MenuCard from '../components/MenuCard';
 import CategoryFilter from '../components/CategoryFilter';
 import Hero from '../components/Hero';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const Home = () => {
   const { dispatch, isAuthenticated } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -17,7 +19,7 @@ const Home = () => {
   useEffect(() => {
     const fetchMenuData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/menu');
+        const response = await fetch(`${API_URL}/api/menu`);
         if (response.ok) {
           const menuData = await response.json();
           setCategories(menuData.categories || []);

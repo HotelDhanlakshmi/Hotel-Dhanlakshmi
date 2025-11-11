@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const CouponManager = () => {
   // --- All your form states (unchanged) ---
   const [code, setCode] = useState('');
@@ -30,9 +32,9 @@ const CouponManager = () => {
       try {
         // Fetch all three sets of data at the same time
         const [productsRes, categoriesRes, couponsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/products'),
-          fetch('http://localhost:5000/api/categories'),
-          fetch('http://localhost:5000/api/admin/coupons') // <-- YOUR NEW ROUTE
+          fetch(`${API_URL}/api/products`),
+          fetch(`${API_URL}/api/categories`),
+          fetch(`${API_URL}/api/admin/coupons`) // <-- YOUR NEW ROUTE
         ]);
 
         if (!productsRes.ok) throw new Error('Failed to fetch products');
@@ -78,7 +80,7 @@ const CouponManager = () => {
 
     try {
       // Send the data to your new POST route
-      const response = await fetch('http://localhost:5000/api/admin/coupons', {
+      const response = await fetch(`${API_URL}/api/admin/coupons`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCoupon),
@@ -111,7 +113,7 @@ const CouponManager = () => {
     setSuccessMessage('');
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/coupons/${couponId}`, {
+      const response = await fetch(`${API_URL}/api/admin/coupons/${couponId}`, {
         method: 'DELETE',
       });
 

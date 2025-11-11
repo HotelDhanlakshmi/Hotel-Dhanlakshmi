@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // CORRECT
 import CouponManager from "./CouponManager";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   // --- MODIFICATION: Set default tab to 'overview' to match your tab array
@@ -55,7 +58,7 @@ const AdminDashboard = () => {
     setIsLoading(true);
     try {
       // Fetch orders
-      const ordersResponse = await fetch('http://localhost:5000/api/admin/orders', {
+      const ordersResponse = await fetch(`${API_URL}/api/admin/orders`, {
         headers: {
           'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
         }
@@ -77,7 +80,7 @@ const AdminDashboard = () => {
         ).reduce((sum, order) => sum + (order.totalAmount || 0), 0) || 0;
 
         // Fetch products from database
-        const productsResponse = await fetch('http://localhost:5000/api/admin/products', {
+        const productsResponse = await fetch(`${API_URL}/api/admin/products`, {
           headers: {
             'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
           }
@@ -119,7 +122,7 @@ const AdminDashboard = () => {
     try {
       console.log('Updating order:', orderId, 'to status:', newStatus);
 
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
+      const response = await fetch(`${API_URL}/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -211,8 +214,8 @@ const AdminDashboard = () => {
       };
 
       const url = editingProduct
-        ? `http://localhost:5000/api/admin/products/${editingProduct.id}`
-        : 'http://localhost:5000/api/admin/products';
+        ? `${API_URL}/api/admin/products/${editingProduct.id}`
+        : `${API_URL}/api/admin/products`;
 
       const method = editingProduct ? 'PUT' : 'POST';
 
@@ -245,7 +248,7 @@ const AdminDashboard = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/products/${productId}`, {
+      const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
         method: 'DELETE',
         headers: {
           'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
