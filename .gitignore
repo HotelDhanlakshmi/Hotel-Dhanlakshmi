@@ -22,5 +22,7 @@ GUEST_CHECKOUT_RAZORPAY_SETUP.md
 CHECKOUT_FLOW_SUMMARY.md
 client/.env.example
 ADMIN_PASSWORD_LOGIN.md
+
+DEPLOYMENT_GUIDE.md
 server/.env
 client/.env
