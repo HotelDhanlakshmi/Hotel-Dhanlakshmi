@@ -55,23 +55,6 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      {/* Header Section */}
-      <div className="maharashtrian-gradient text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="marathi-heading text-3xl md:text-4xl mb-4">
-            🍽️ आमचा मेनू 🍽️
-          </div>
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">Our Menu</h1>
-          <p className="text-xl md:text-2xl max-w-3xl mx-auto">
-            Discover the authentic flavors of <span className="marathi-text font-semibold">महाराष्ट्र</span> 
-            with our carefully curated selection of traditional and modern dishes.
-          </p>
-          <div className="marathi-text text-lg mt-4 opacity-90">
-            "जेवणाचा आस्वाद घ्या" - Enjoy the taste of food
-          </div>
-        </div>
-      </div>
-
       {/* Search Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="max-w-2xl mx-auto">

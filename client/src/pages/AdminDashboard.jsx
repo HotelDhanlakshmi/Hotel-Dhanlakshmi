@@ -29,7 +29,9 @@ const AdminDashboard = () => {
     image: '',
     available: true
   });
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [settings, setSettings] = useState(null);
+  const [settingsForm, setSettingsForm] = useState({});
+  const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Check admin session
   useEffect(() => {
@@ -76,8 +78,9 @@ const AdminDashboard = () => {
 
         const today = new Date().toDateString();
         const todayRevenue = ordersData.data?.filter(order =>
-          new Date(order.createdAt).toDateString() === today
-        ).reduce((sum, order) => sum + (order.totalAmount || 0), 0) || 0;
+          new Date(order.createdAt).toDateString() === today &&
+          order.status !== 'cancelled'
+        ).reduce((sum, order) => sum + (order.total || 0), 0) || 0;
 
         // Fetch products from database
         const productsResponse = await fetch(`${API_URL}/api/admin/products`, {
@@ -105,6 +108,19 @@ const AdminDashboard = () => {
             totalProducts: 0
           });
         }
+      }
+
+      // Fetch settings
+      const settingsResponse = await fetch(`${API_URL}/api/admin/settings`, {
+        headers: {
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
+        }
+      });
+
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+        setSettings(settingsData.data);
+        setSettingsForm(settingsData.data);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -636,63 +652,199 @@ const AdminDashboard = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
 
-                <div className="space-y-6">
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2">Restaurant Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
-                        <input
-                          type="text"
-                          defaultValue="Hotel Dhanlakshmi"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                        <input
-                          type="tel"
-                          defaultValue="+91 9876543210"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                        />
+                {!settings ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto"></div>
+                    <p className="text-gray-600 mt-2">Loading settings...</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-800 mb-4">Restaurant Information</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Restaurant Name</label>
+                          <input
+                            type="text"
+                            value={settingsForm.restaurantName || ''}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, restaurantName: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                          <input
+                            type="tel"
+                            value={settingsForm.phoneNumber || ''}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, phoneNumber: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                          <input
+                            type="email"
+                            value={settingsForm.email || ''}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, email: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                          <input
+                            type="text"
+                            value={settingsForm.address || ''}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, address: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-semibold text-gray-800 mb-2">Order Settings</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Min Order Amount</label>
-                        <input
-                          type="number"
-                          defaultValue="200"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Max COD Amount</label>
-                        <input
-                          type="number"
-                          defaultValue="2000"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Time (minutes)</label>
-                        <input
-                          type="number"
-                          defaultValue="40"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
-                        />
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-800 mb-4">Order Settings</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Min Order Amount (₹)</label>
+                          <input
+                            type="number"
+                            value={settingsForm.minOrderAmount || 0}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, minOrderAmount: parseInt(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Max COD Amount (₹)</label>
+                          <input
+                            type="number"
+                            value={settingsForm.maxCODAmount || 0}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, maxCODAmount: parseInt(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Time (min)</label>
+                          <input
+                            type="number"
+                            value={settingsForm.deliveryTime || 0}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, deliveryTime: parseInt(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Max Daily Orders</label>
+                          <input
+                            type="number"
+                            value={settingsForm.maxDailyOrders || 0}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, maxDailyOrders: parseInt(e.target.value) })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <button className="maharashtrian-gradient hover:shadow-glow text-white px-6 py-3 rounded-lg transition-all">
-                    Save Settings
-                  </button>
-                </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-800 mb-4">Payment Settings</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="onlinePayment"
+                            checked={settingsForm.onlinePaymentEnabled || false}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, onlinePaymentEnabled: e.target.checked })}
+                            className="mr-2"
+                          />
+                          <label htmlFor="onlinePayment" className="text-sm text-gray-700">
+                            Enable Online Payment (Razorpay)
+                          </label>
+                        </div>
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="codEnabled"
+                            checked={settingsForm.codEnabled !== false}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, codEnabled: e.target.checked })}
+                            className="mr-2"
+                          />
+                          <label htmlFor="codEnabled" className="text-sm text-gray-700">
+                            Enable Cash on Delivery
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <h3 className="font-semibold text-gray-800 mb-4">Operational Settings</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="restaurantOpen"
+                            checked={settingsForm.restaurantOpen !== false}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, restaurantOpen: e.target.checked })}
+                            className="mr-2"
+                          />
+                          <label htmlFor="restaurantOpen" className="text-sm text-gray-700">
+                            Restaurant is Open
+                          </label>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Opening Time</label>
+                          <input
+                            type="time"
+                            value={settingsForm.openingTime || '09:00'}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, openingTime: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Closing Time</label>
+                          <input
+                            type="time"
+                            value={settingsForm.closingTime || '22:00'}
+                            onChange={(e) => setSettingsForm({ ...settingsForm, closingTime: e.target.value })}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end">
+                      <button
+                        onClick={async () => {
+                          setIsSavingSettings(true);
+                          try {
+                            const response = await fetch(`${API_URL}/api/admin/settings`, {
+                              method: 'PUT',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
+                              },
+                              body: JSON.stringify(settingsForm)
+                            });
+
+                            if (response.ok) {
+                              const data = await response.json();
+                              setSettings(data.data);
+                              alert('Settings saved successfully!');
+                            } else {
+                              alert('Failed to save settings');
+                            }
+                          } catch (error) {
+                            console.error('Error saving settings:', error);
+                            alert('Error saving settings');
+                          } finally {
+                            setIsSavingSettings(false);
+                          }
+                        }}
+                        disabled={isSavingSettings}
+                        className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSavingSettings ? 'Saving...' : 'Save Settings'}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

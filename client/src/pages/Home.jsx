@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import MenuCard from '../components/MenuCard';
 import CategoryFilter from '../components/CategoryFilter';
 import Hero from '../components/Hero';
+import BestSellersToday from '../components/BestSellersToday';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -64,6 +65,9 @@ const Home = () => {
     <div className="min-h-screen">
       {/* Hero Section */}
       <Hero />
+
+      {/* Best Sellers Today */}
+      <BestSellersToday />
 
       {/* Search Bar */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -16,6 +16,7 @@ const User = require('./models/User');
 const Order = require('./models/Order');
 const Product = require('./models/Product');
 const Otp = require('./models/Otp');
+const Settings = require('./models/Settings');
 const menuData = require('./data/menuData');
 const Coupon = require('./models/coupon'); // Make sure this path is correct
 
@@ -39,8 +40,7 @@ app.use(helmet());
 // CORS configuration - Allow multiple origins
 const allowedOrigins = [
   'http://localhost:5173', // Development
-  process.env.CLIENT_URL,  // Production (set in environment variables)
-  process.env.CLIENT_URL_2 // Additional domain if needed
+  process.env.CLIENT_URL  // Production (set in environment variables)
 ].filter(Boolean); // Remove undefined values
 
 app.use(cors({
@@ -205,6 +205,64 @@ app.get('/api/menu', async (req, res) => {
       console.error('Error reading menu file:', fileError);
       res.status(500).json({ error: 'Failed to load menu' });
     }
+  }
+});
+
+// Get today's best sellers (public endpoint)
+app.get('/api/best-sellers/today', async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({ success: true, data: [] });
+    }
+
+    // Get start and end of today (IST timezone)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Aggregate orders to find most sold products today
+    const bestSellers = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: today, $lt: tomorrow },
+          status: { $nin: ['cancelled'] } // Exclude cancelled orders
+        }
+      },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.id',
+          productName: { $first: '$items.name' },
+          totalQuantity: { $sum: '$items.quantity' },
+          totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } }
+        }
+      },
+      { $sort: { totalQuantity: -1 } },
+      { $limit: 5 } // Top 5 best sellers
+    ]);
+
+    // Enrich with product details
+    const enrichedBestSellers = await Promise.all(
+      bestSellers.map(async (item) => {
+        const product = await Product.findOne({ id: item._id });
+        return {
+          id: item._id,
+          name: item.productName,
+          soldCount: item.totalQuantity,
+          revenue: item.totalRevenue,
+          product: product || null
+        };
+      })
+    );
+
+    res.json({ 
+      success: true, 
+      data: enrichedBestSellers.filter(item => item.product),
+      date: today.toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch best sellers' });
   }
 });
 
@@ -1365,6 +1423,90 @@ app.post('/api/webhook/whatsapp', express.raw({ type: 'application/json' }), (re
   console.log('WhatsApp webhook received:', JSON.stringify(body, null, 2));
 
   res.status(200).send('OK');
+});
+
+// Settings Management (Admin)
+
+// Get settings
+app.get('/api/admin/settings', adminAuth, async (req, res) => {
+  try {
+    const settings = await Settings.getSettings();
+    res.json({ success: true, data: settings });
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
+  }
+});
+
+// Update settings
+app.put('/api/admin/settings', adminAuth, async (req, res) => {
+  try {
+    const settings = await Settings.getSettings();
+    
+    // Update only provided fields
+    Object.keys(req.body).forEach(key => {
+      if (settings.schema.paths[key]) {
+        settings[key] = req.body[key];
+      }
+    });
+
+    await settings.save();
+    
+    res.json({ 
+      success: true, 
+      message: 'Settings updated successfully',
+      data: settings 
+    });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ error: 'Failed to update settings' });
+  }
+});
+
+// Get revenue statistics (Admin)
+app.get('/api/admin/revenue', adminAuth, async (req, res) => {
+  try {
+    const { period } = req.query; // 'today', 'week', 'month', 'all'
+    
+    let startDate;
+    const now = new Date();
+    
+    switch(period) {
+      case 'today':
+        startDate = new Date(now.setHours(0, 0, 0, 0));
+        break;
+      case 'week':
+        startDate = new Date(now.setDate(now.getDate() - 7));
+        break;
+      case 'month':
+        startDate = new Date(now.setMonth(now.getMonth() - 1));
+        break;
+      default:
+        startDate = new Date(0); // All time
+    }
+
+    const orders = await Order.find({
+      createdAt: { $gte: startDate },
+      status: { $nin: ['cancelled'] }
+    });
+
+    const revenue = {
+      totalRevenue: orders.reduce((sum, order) => sum + order.total, 0),
+      totalOrders: orders.length,
+      averageOrderValue: orders.length > 0 
+        ? orders.reduce((sum, order) => sum + order.total, 0) / orders.length 
+        : 0,
+      totalDiscount: orders.reduce((sum, order) => sum + (order.discountAmount || 0), 0),
+      subtotalRevenue: orders.reduce((sum, order) => sum + order.subtotal, 0),
+      period: period || 'all',
+      startDate: startDate.toISOString()
+    };
+
+    res.json({ success: true, data: revenue });
+  } catch (error) {
+    console.error('Error fetching revenue:', error);
+    res.status(500).json({ error: 'Failed to fetch revenue' });
+  }
 });
 
 // Health check
