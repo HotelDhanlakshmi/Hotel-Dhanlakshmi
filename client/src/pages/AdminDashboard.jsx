@@ -32,6 +32,21 @@ const AdminDashboard = () => {
   const [settings, setSettings] = useState(null);
   const [settingsForm, setSettingsForm] = useState({});
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  
+  // Admin credentials update states
+  const [showMobileModal, setShowMobileModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [mobileForm, setMobileForm] = useState({
+    currentMobile: '',
+    newMobile: '',
+    password: ''
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [adminMobile, setAdminMobile] = useState('');
 
   // Check admin session
   useEffect(() => {
@@ -52,6 +67,10 @@ const AdminDashboard = () => {
       navigate('/admin/login');
       return;
     }
+
+    // Set admin mobile
+    setAdminMobile(session.mobile);
+    setMobileForm(prev => ({ ...prev, currentMobile: session.mobile }));
 
     fetchData();
   }, [navigate]);
@@ -132,6 +151,95 @@ const AdminDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('admin_session');
     navigate('/', { replace: true });
+  };
+
+  // Handle mobile number update
+  const handleUpdateMobile = async (e) => {
+    e.preventDefault();
+    
+    if (mobileForm.newMobile === mobileForm.currentMobile) {
+      alert('New mobile number must be different from current one');
+      return;
+    }
+
+    if (!/^[6-9]\d{9}$/.test(mobileForm.newMobile)) {
+      alert('Please enter a valid 10-digit mobile number');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/update-mobile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
+        },
+        body: JSON.stringify(mobileForm)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Mobile number updated successfully! Please login again with new mobile number.');
+        
+        // Update session
+        const session = JSON.parse(localStorage.getItem('admin_session'));
+        session.mobile = mobileForm.newMobile;
+        localStorage.setItem('admin_session', JSON.stringify(session));
+        
+        setShowMobileModal(false);
+        setMobileForm({ currentMobile: mobileForm.newMobile, newMobile: '', password: '' });
+        setAdminMobile(mobileForm.newMobile);
+      } else {
+        alert(data.error || 'Failed to update mobile number');
+      }
+    } catch (error) {
+      console.error('Error updating mobile:', error);
+      alert('Error updating mobile number');
+    }
+  };
+
+  // Handle password update
+  const handleUpdatePassword = async (e) => {
+    e.preventDefault();
+
+    if (passwordForm.newPassword.length < 6) {
+      alert('New password must be at least 6 characters');
+      return;
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert('New password and confirm password do not match');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/update-password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
+        },
+        body: JSON.stringify({
+          mobile: adminMobile,
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Password updated successfully!');
+        setShowPasswordModal(false);
+        setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      } else {
+        alert(data.error || 'Failed to update password');
+      }
+    } catch (error) {
+      console.error('Error updating password:', error);
+      alert('Error updating password');
+    }
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -809,6 +917,55 @@ const AdminDashboard = () => {
                       </div>
                     </div>
 
+                    {/* Admin Credentials Section */}
+                    <div className="bg-red-50 border-2 border-red-200 rounded-lg p-4">
+                      <h3 className="font-semibold text-red-800 mb-4 flex items-center">
+                        <span className="text-xl mr-2">🔐</span>
+                        Admin Credentials (Security)
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Update your admin mobile number and password for enhanced security
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-white rounded-lg p-4 border border-red-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-800">Mobile Number</h4>
+                              <p className="text-sm text-gray-600">Current: +91 {adminMobile}</p>
+                            </div>
+                            <span className="text-2xl">📱</span>
+                          </div>
+                          <button
+                            onClick={() => setShowMobileModal(true)}
+                            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm mt-2"
+                          >
+                            Change Mobile Number
+                          </button>
+                        </div>
+
+                        <div className="bg-white rounded-lg p-4 border border-red-200">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-800">Password</h4>
+                              <p className="text-sm text-gray-600">Last changed: Recently</p>
+                            </div>
+                            <span className="text-2xl">🔑</span>
+                          </div>
+                          <button
+                            onClick={() => setShowPasswordModal(true)}
+                            className="w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors text-sm mt-2"
+                          >
+                            Change Password
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                        <p className="text-xs text-yellow-800">
+                          ⚠️ <strong>Security Note:</strong> Changing your mobile number will require you to login again with the new number. Make sure to remember your new credentials!
+                        </p>
+                      </div>
+                    </div>
+
                     <div className="flex justify-end">
                       <button
                         onClick={async () => {
@@ -1015,6 +1172,176 @@ const AdminDashboard = () => {
                 </div>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile Number Update Modal */}
+      {showMobileModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">Change Mobile Number</h3>
+              <button
+                onClick={() => setShowMobileModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateMobile}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Current Mobile Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={mobileForm.currentMobile}
+                    disabled
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Mobile Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    maxLength="10"
+                    value={mobileForm.newMobile}
+                    onChange={(e) => setMobileForm({ ...mobileForm, newMobile: e.target.value.replace(/\D/g, '') })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter new 10-digit mobile"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={mobileForm.password}
+                    onChange={(e) => setMobileForm({ ...mobileForm, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Enter your current password"
+                  />
+                </div>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-xs text-yellow-800">
+                    ⚠️ You will need to login again with the new mobile number after this change.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    Update Mobile
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Password Update Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">Change Password</h3>
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdatePassword}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Current Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Enter current password"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New Password * (min 6 characters)
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    minLength="6"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Enter new password"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm New Password *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                    placeholder="Confirm new password"
+                  />
+                </div>
+
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    💡 <strong>Tip:</strong> Use a strong password with a mix of letters, numbers, and symbols.
+                  </p>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordModal(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
+                  >
+                    Update Password
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -11,6 +11,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  password: {
+    type: String,
+    // Only required for admin users
+    required: function() {
+      return this.isAdmin === true;
+    }
+  },
   address: {
     street: { type: String },
     city: { type: String },

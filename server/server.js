@@ -10,6 +10,7 @@ const cron = require('node-cron');
 const mongoose = require('mongoose');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const whatsappService = require('./services/whatsappService');
 const connectDB = require('./config/database');
 const User = require('./models/User');
@@ -47,7 +48,7 @@ app.use(cors({
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -256,8 +257,8 @@ app.get('/api/best-sellers/today', async (req, res) => {
       })
     );
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       data: enrichedBestSellers.filter(item => item.product),
       date: today.toISOString()
     });
@@ -960,24 +961,31 @@ app.post('/api/admin/login', async (req, res) => {
     // Check if mobile is admin from MongoDB
     const isAdmin = await isAdminMobile(mobile);
     if (!isAdmin) {
-      return res.status(403).json({ 
-        error: 'Unauthorized: This mobile number is not registered as an admin.' 
+      return res.status(403).json({
+        error: 'Unauthorized: This mobile number is not registered as an admin.'
       });
     }
 
     // Get admin user
     const adminUser = await User.findOne({ mobile, isAdmin: true });
-    
+
     if (!adminUser) {
       return res.status(403).json({ error: 'Invalid credentials' });
     }
 
-    // For now, use a simple password check
-    // In production, you should hash passwords with bcrypt
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
-    
-    if (password !== ADMIN_PASSWORD) {
-      return res.status(403).json({ error: 'Invalid credentials' });
+    // Check if admin has password set
+    if (!adminUser.password) {
+      // Fallback to environment variable for backward compatibility
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(403).json({ error: 'Invalid credentials' });
+      }
+    } else {
+      // Verify hashed password
+      const isPasswordValid = await bcrypt.compare(password, adminUser.password);
+      if (!isPasswordValid) {
+        return res.status(403).json({ error: 'Invalid credentials' });
+      }
     }
 
     // Update user's last login
@@ -988,8 +996,8 @@ app.post('/api/admin/login', async (req, res) => {
 
     const adminToken = `admin_${mobile}_${Date.now()}`;
 
-    res.json({ 
-      success: true, 
+    res.json({
+      success: true,
       message: 'Admin login successful',
       token: adminToken,
       mobile: mobile
@@ -1438,11 +1446,31 @@ app.get('/api/admin/settings', adminAuth, async (req, res) => {
   }
 });
 
+// Get admin profile
+app.get('/api/admin/profile', adminAuth, async (req, res) => {
+  try {
+    const adminSession = req.headers['x-admin-mobile'];
+    if (!adminSession) {
+      return res.status(401).json({ error: 'Admin session not found' });
+    }
+
+    const admin = await User.findOne({ mobile: adminSession, isAdmin: true }).select('-password');
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    res.json({ success: true, data: admin });
+  } catch (error) {
+    console.error('Error fetching admin profile:', error);
+    res.status(500).json({ error: 'Failed to fetch admin profile' });
+  }
+});
+
 // Update settings
 app.put('/api/admin/settings', adminAuth, async (req, res) => {
   try {
     const settings = await Settings.getSettings();
-    
+
     // Update only provided fields
     Object.keys(req.body).forEach(key => {
       if (settings.schema.paths[key]) {
@@ -1451,11 +1479,11 @@ app.put('/api/admin/settings', adminAuth, async (req, res) => {
     });
 
     await settings.save();
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: 'Settings updated successfully',
-      data: settings 
+      data: settings
     });
   } catch (error) {
     console.error('Error updating settings:', error);
@@ -1463,15 +1491,123 @@ app.put('/api/admin/settings', adminAuth, async (req, res) => {
   }
 });
 
+// Update admin mobile number
+app.put('/api/admin/update-mobile', adminAuth, async (req, res) => {
+  try {
+    const { currentMobile, newMobile, password } = req.body;
+
+    // Validation
+    if (!currentMobile || !newMobile || !password) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (!isValidMobile(currentMobile) || !isValidMobile(newMobile)) {
+      return res.status(400).json({ error: 'Invalid mobile number format' });
+    }
+
+    // Get current admin
+    const admin = await User.findOne({ mobile: currentMobile, isAdmin: true });
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    // Verify password
+    if (!admin.password) {
+      // First time - verify against environment variable
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+      if (password !== ADMIN_PASSWORD) {
+        return res.status(403).json({ error: 'Invalid password' });
+      }
+    } else {
+      const isPasswordValid = await bcrypt.compare(password, admin.password);
+      if (!isPasswordValid) {
+        return res.status(403).json({ error: 'Invalid password' });
+      }
+    }
+
+    // Check if new mobile already exists
+    const existingUser = await User.findOne({ mobile: newMobile });
+    if (existingUser && existingUser.mobile !== currentMobile) {
+      return res.status(400).json({ error: 'Mobile number already registered' });
+    }
+
+    // Update mobile
+    admin.mobile = newMobile;
+    await admin.save();
+
+    res.json({
+      success: true,
+      message: 'Mobile number updated successfully',
+      newMobile: newMobile
+    });
+  } catch (error) {
+    console.error('Error updating mobile:', error);
+    res.status(500).json({ error: 'Failed to update mobile number', details: error.message });
+  }
+});
+
+// Update admin password
+app.put('/api/admin/update-password', adminAuth, async (req, res) => {
+  try {
+    const { mobile, currentPassword, newPassword } = req.body;
+
+    // Validation
+    if (!mobile || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+
+    // Get admin
+    const admin = await User.findOne({ mobile, isAdmin: true });
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found' });
+    }
+
+    // Check if admin has password set
+    if (!admin.password) {
+      // First time setting password - verify against environment variable
+      const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+      if (currentPassword !== ADMIN_PASSWORD) {
+        return res.status(403).json({ error: 'Current password is incorrect' });
+      }
+    } else {
+      // Verify current password
+      const isPasswordValid = await bcrypt.compare(currentPassword, admin.password);
+      if (!isPasswordValid) {
+        return res.status(403).json({ error: 'Current password is incorrect' });
+      }
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password
+    admin.password = hashedPassword;
+    await admin.save();
+
+    res.json({
+      success: true,
+      message: 'Password updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating password:', error);
+    res.status(500).json({ error: 'Failed to update password', details: error.message });
+  }
+});
+
 // Get revenue statistics (Admin)
 app.get('/api/admin/revenue', adminAuth, async (req, res) => {
   try {
     const { period } = req.query; // 'today', 'week', 'month', 'all'
-    
+
     let startDate;
     const now = new Date();
-    
-    switch(period) {
+
+    switch (period) {
       case 'today':
         startDate = new Date(now.setHours(0, 0, 0, 0));
         break;
@@ -1493,8 +1629,8 @@ app.get('/api/admin/revenue', adminAuth, async (req, res) => {
     const revenue = {
       totalRevenue: orders.reduce((sum, order) => sum + order.total, 0),
       totalOrders: orders.length,
-      averageOrderValue: orders.length > 0 
-        ? orders.reduce((sum, order) => sum + order.total, 0) / orders.length 
+      averageOrderValue: orders.length > 0
+        ? orders.reduce((sum, order) => sum + order.total, 0) / orders.length
         : 0,
       totalDiscount: orders.reduce((sum, order) => sum + (order.discountAmount || 0), 0),
       subtotalRevenue: orders.reduce((sum, order) => sum + order.subtotal, 0),
