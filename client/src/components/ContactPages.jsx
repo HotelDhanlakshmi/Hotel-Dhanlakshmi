@@ -193,7 +193,7 @@ const ContactPage = () => {
                 <strong>Contact (संपर्क):</strong>
                 <br />
                 {/* --- TODO: Remember to add your real phone number --- */}
-                <a href="tel:+919876543210" className="text-orange-600 hover:underline">+91 98765 43210</a>
+                <a href="tel:+917768886611" className="text-orange-600 hover:underline">+91 98765 43210</a>
               </p>
             </div>
           </div>
