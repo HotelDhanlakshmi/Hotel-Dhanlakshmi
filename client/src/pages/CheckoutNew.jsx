@@ -172,7 +172,7 @@ const CheckoutNew = () => {
       const { order } = await response.json();
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_YOUR_KEY',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: 'Hotel Dhanlakshmi',
@@ -428,34 +428,35 @@ const CheckoutNew = () => {
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Payment Method</h3>
             <div className="space-y-3">
-              <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              {/* Online Payment - Disabled */}
+              <label className="flex items-center space-x-3 p-4 border-2 rounded-lg opacity-50 cursor-not-allowed bg-gray-50">
                 <input
                   type="radio"
                   name="payment"
                   value="online"
-                  checked={paymentMethod === 'online'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  disabled
                   className="text-orange-500 focus:ring-orange-500 w-5 h-5"
                 />
                 <div className="flex items-center space-x-3 flex-1">
                   <span className="text-2xl">💳</span>
                   <div>
                     <p className="font-medium text-gray-800">Online Payment</p>
-                    <p className="text-sm text-gray-600">UPI, Cards, Net Banking</p>
+                    <p className="text-sm text-gray-600">Coming Soon - Under Development</p>
                   </div>
                 </div>
-                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
-                  Secure
+                <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded">
+                  Coming Soon
                 </span>
               </label>
 
-              <label className="flex items-center space-x-3 p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              {/* Cash on Delivery - Active */}
+              <label className="flex items-center space-x-3 p-4 border-2 border-orange-500 rounded-lg cursor-pointer bg-orange-50">
                 <input
                   type="radio"
                   name="payment"
                   value="cod"
-                  checked={paymentMethod === 'cod'}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  checked={true}
+                  readOnly
                   className="text-orange-500 focus:ring-orange-500 w-5 h-5"
                 />
                 <div className="flex items-center space-x-3 flex-1">
@@ -465,6 +466,9 @@ const CheckoutNew = () => {
                     <p className="text-sm text-gray-600">Pay when order arrives (Max ₹2000)</p>
                   </div>
                 </div>
+                <span className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded">
+                  Available
+                </span>
               </label>
             </div>
           </div>

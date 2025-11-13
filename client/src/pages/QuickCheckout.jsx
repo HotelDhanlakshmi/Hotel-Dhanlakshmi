@@ -80,8 +80,6 @@ const QuickCheckout = () => {
       // The server will calculate it securely.
     };
 
-    console.log('Sending order data:', orderData); // Debug log
-
     try {
       const response = await fetch(`${API_URL}/api/orders`, {
         method: 'POST',
@@ -90,18 +88,14 @@ const QuickCheckout = () => {
       });
 
       const data = await response.json();
-      console.log('Order response:', data); // Debug log
 
       if (data.success) {
         dispatch({ type: 'CLEAR_CART' });
-        // Use data.data.orderId from your server's response
         navigate(`/track-order/${data.data.orderId}?mobile=${userInfo.mobile}`);
       } else {
-        console.error('Order creation failed:', data);
         alert(data.error || 'Failed to place order');
       }
     } catch (error) {
-      console.error('Network error:', error);
       alert('Network error. Please try again.');
     } finally {
       setIsPlacingOrder(false);

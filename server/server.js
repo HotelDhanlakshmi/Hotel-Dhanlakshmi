@@ -38,9 +38,9 @@ app.use(helmet());
 
 // CORS configuration - Allow multiple origins
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://hoteldhanlakshmi.netlify.app',
-  process.env.CLIENT_URL
+  'http://localhost:5173', // Development
+  process.env.CLIENT_URL,  // Production (set in environment variables)
+  process.env.CLIENT_URL_2 // Additional domain if needed
 ].filter(Boolean); // Remove undefined values
 
 app.use(cors({

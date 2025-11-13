@@ -60,7 +60,7 @@ const AdminDashboard = () => {
       // Fetch orders
       const ordersResponse = await fetch(`${API_URL}/api/admin/orders`, {
         headers: {
-          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
         }
       });
 
@@ -82,7 +82,7 @@ const AdminDashboard = () => {
         // Fetch products from database
         const productsResponse = await fetch(`${API_URL}/api/admin/products`, {
           headers: {
-            'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+            'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
           }
         });
 
@@ -126,7 +126,7 @@ const AdminDashboard = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
         },
         body: JSON.stringify({ status: newStatus })
       });
@@ -223,7 +223,7 @@ const AdminDashboard = () => {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
         },
         body: JSON.stringify(productData)
       });
@@ -251,7 +251,7 @@ const AdminDashboard = () => {
       const response = await fetch(`${API_URL}/api/admin/products/${productId}`, {
         method: 'DELETE',
         headers: {
-          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024'
+          'X-API-Key': import.meta.env.VITE_ADMIN_API_KEY
         }
       });
 
