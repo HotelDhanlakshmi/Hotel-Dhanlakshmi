@@ -391,6 +391,4 @@ For support and questions:
 
 ---
 
-**Made with ❤️ for authentic Maharashtrian cuisine**
-
 *"अन्नं हे पूर्ण ब्रह्म" - Food is Divine* ✨

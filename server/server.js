@@ -21,6 +21,7 @@ const Settings = require('./models/Settings');
 const menuData = require('./data/menuData');
 const Coupon = require('./models/coupon');
 const Banner = require('./models/BannerModel'); 
+const bannerRoutes = require('./routes/banners.js')
 
 require('dotenv').config();
 
@@ -62,6 +63,8 @@ app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Add this with your other routes
+app.use('/api', bannerRoutes);
 // Serve static files
 app.use('/admin', express.static(path.join(__dirname, 'public')));
 

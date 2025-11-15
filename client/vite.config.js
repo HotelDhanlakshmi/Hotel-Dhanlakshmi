@@ -8,6 +8,6 @@ export default defineConfig({
   base: './', // Fixes white screen on Netlify
   esbuild: {
     // Remove console logs in production
-    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : []
+    drop: ['console', 'debugger']
   }
 })
