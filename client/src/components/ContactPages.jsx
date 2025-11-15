@@ -211,7 +211,7 @@ const ContactPage = () => {
 
             <div className="w-full rounded-lg overflow-hidden shadow-lg">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3742.9342049029583!2d74.4395874!3d20.2615633!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bdc25ba69a61b87%3A0xcd372971a493642!2sMH%20SH%2010%20%26%20Nagar%20Manmad%20Hwy%2C%20Bardiya%20Nagar%2C%20Manmad%2C%20Maharashtra%20423104!5e0!3m2!1sen!2sin!4v1762800563042!5m2!1sen!2sin"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3255.2343722815003!2d74.58850927314947!3d19.460191523208668!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bdced4d7dc66005%3A0xb268a0b7389256ec!2sDhanlaxmi%20Hotel%20%26%20Lodging!5e0!3m2!1sen!2sin!4v1763047387313!5m2!1sen!2sin"
                 width="100%"
                 height="450"
                 style={{ border: 0 }}
