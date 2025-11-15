@@ -19,7 +19,8 @@ const Product = require('./models/Product');
 const Otp = require('./models/Otp');
 const Settings = require('./models/Settings');
 const menuData = require('./data/menuData');
-const Coupon = require('./models/coupon'); // Make sure this path is correct
+const Coupon = require('./models/coupon');
+const Banner = require('./models/BannerModel'); 
 
 require('dotenv').config();
 
@@ -111,6 +112,9 @@ async function initializeData() {
   }
 }
 
+
+
+
 // Utility functions
 async function readJsonFile(filePath) {
   try {
@@ -162,7 +166,89 @@ async function isAdminMobile(mobile) {
   }
 }
 
-// API Routes
+// API for Banner Routes
+app.get('/api/banners', async (req, res) => {
+  try {
+    const banners = await Banner.find({ isActive: true })
+                                .sort({ sortOrder: 1 }); // Sort by the order admin sets
+    res.json({ success: true, data: banners });
+  } catch (error) {
+    console.error('Error fetching active banners:', error);
+    res.status(500).json({ error: 'Failed to fetch banners' });
+  }
+});
+
+const ADMIN_KEY = process.env.VITE_ADMIN_API_KEY || 'hotel_dhanlakshmi_admin_2024';
+
+app.get('/api/admin/banners', async (req, res) => {
+  if (req.headers['x-api-key'] !== ADMIN_KEY) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  try {
+    const banners = await Banner.find({}).sort({ sortOrder: 1 });
+    res.json({ success: true, data: banners });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch banners' });
+  }
+});
+
+app.post('/api/admin/banners', async (req, res) => {
+  if (req.headers['x-api-key'] !== ADMIN_KEY) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  try {
+    // Only save the simplified data
+    const newBanner = new Banner({
+      imageUrl: req.body.imageUrl,
+      link: req.body.link || '/menu',
+      isActive: req.body.isActive,
+      sortOrder: req.body.sortOrder
+    });
+    const savedBanner = await newBanner.save();
+    res.status(201).json({ success: true, data: savedBanner });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to create banner', details: error.message });
+  }
+});
+
+app.put('/api/admin/banners/:id', async (req, res) => {
+  if (req.headers['x-api-key'] !== ADMIN_KEY) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  try {
+    // Only update the simplified data
+    const updatedBannerData = {
+      imageUrl: req.body.imageUrl,
+      link: req.body.link || '/menu',
+      isActive: req.body.isActive,
+      sortOrder: req.body.sortOrder
+    };
+
+    const updatedBanner = await Banner.findByIdAndUpdate(
+      req.params.id,
+      updatedBannerData,
+      { new: true, runValidators: true } 
+    );
+    if (!updatedBanner) return res.status(404).json({ error: 'Banner not found' });
+    res.json({ success: true, data: updatedBanner });
+  } catch (error) {
+    res.status(400).json({ error: 'Failed to update banner', details: error.message });
+  }
+});
+
+
+app.delete('/api/admin/banners/:id', async (req, res) => {
+  if (req.headers['x-api-key'] !== ADMIN_KEY) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  try {
+    const deletedBanner = await Banner.findByIdAndDelete(req.params.id);
+    if (!deletedBanner) return res.status(404).json({ error: 'Banner not found' });
+    res.json({ success: true, message: 'Banner deleted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete banner' });
+  }
+});
 
 // Get menu items (public endpoint)
 app.get('/api/menu', async (req, res) => {
