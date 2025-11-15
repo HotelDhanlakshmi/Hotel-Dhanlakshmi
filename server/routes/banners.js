@@ -17,14 +17,16 @@ const adminAuth = (req, res, next) => {
 router.get('/banners', async (req, res) => {
   try {
     const banners = await Banner.find({ isActive: true })
-                                .sort({ sortOrder: 1 }); // Sort by the order admin sets
+                                .select('-imageData') // Don't send image data to public endpoint
+                                .sort({ sortOrder: 1 });
+    
     res.json({ 
       success: true, 
       data: banners,
       message: 'Banners fetched successfully'
     });
   } catch (error) {
-    console.error('Error fetching active banners:', error);
+    console.error('Error fetching banners:', error);
     res.status(500).json({ 
       success: false,
       error: 'Failed to fetch banners' 
@@ -32,7 +34,7 @@ router.get('/banners', async (req, res) => {
   }
 });
 
-// Get all banners (admin only)
+// Get all banners (admin only) - includes image data
 router.get('/admin/banners', adminAuth, async (req, res) => {
   try {
     const banners = await Banner.find({}).sort({ sortOrder: 1 });
@@ -50,28 +52,28 @@ router.get('/admin/banners', adminAuth, async (req, res) => {
   }
 });
 
-// Create new banner (admin only)
+// Create new banner with image data (admin only)
 router.post('/admin/banners', adminAuth, async (req, res) => {
   try {
-    const { title, subtitle, imageUrl, cloudinaryId, link, altText, sortOrder, isActive } = req.body;
+    const { title, subtitle, imageData, imageUrl, link, altText, sortOrder, isActive } = req.body;
 
-    // Validation
-    if (!imageUrl) {
+    // Validation - either imageData or imageUrl is required
+    if (!imageData && !imageUrl) {
       return res.status(400).json({ 
         success: false,
-        error: 'Image URL is required' 
+        error: 'Either image data or image URL is required' 
       });
     }
 
     const newBanner = new Banner({
-      title: title || '',
-      subtitle: subtitle || '',
-      imageUrl,
-      cloudinaryId: cloudinaryId || '',
+      title: title || 'New Banner',
+      subtitle: subtitle || 'Discover our delicious offerings',
+      imageData: imageData || null,
+      imageUrl: imageUrl || (imageData ? `data:image/jpeg;base64,${imageData}` : ''),
       link: link || '/menu',
       altText: altText || 'Banner Image',
       sortOrder: sortOrder || 0,
-      isActive: isActive !== false // Default to true
+      isActive: isActive !== false
     });
 
     const savedBanner = await newBanner.save();
@@ -85,8 +87,7 @@ router.post('/admin/banners', adminAuth, async (req, res) => {
     console.error('Error creating banner:', error);
     res.status(400).json({ 
       success: false,
-      error: 'Failed to create banner', 
-      details: error.message 
+      error: 'Failed to create banner: ' + error.message
     });
   }
 });
@@ -94,22 +95,29 @@ router.post('/admin/banners', adminAuth, async (req, res) => {
 // Update banner (admin only)
 router.put('/admin/banners/:id', adminAuth, async (req, res) => {
   try {
-    const { title, subtitle, imageUrl, cloudinaryId, link, altText, sortOrder, isActive } = req.body;
+    const { title, subtitle, imageData, imageUrl, link, altText, sortOrder, isActive } = req.body;
 
-    const updatedBannerData = {
+    const updateData = {
       ...(title !== undefined && { title }),
       ...(subtitle !== undefined && { subtitle }),
-      ...(imageUrl !== undefined && { imageUrl }),
-      ...(cloudinaryId !== undefined && { cloudinaryId }),
       ...(link !== undefined && { link }),
       ...(altText !== undefined && { altText }),
       ...(sortOrder !== undefined && { sortOrder }),
       ...(isActive !== undefined && { isActive })
     };
 
+    // Update image data if provided
+    if (imageData !== undefined) {
+      updateData.imageData = imageData;
+      updateData.imageUrl = `data:image/jpeg;base64,${imageData}`;
+    } else if (imageUrl !== undefined) {
+      updateData.imageUrl = imageUrl;
+      updateData.imageData = null; // Clear base64 data if using URL
+    }
+
     const updatedBanner = await Banner.findByIdAndUpdate(
       req.params.id,
-      updatedBannerData,
+      updateData,
       { new: true, runValidators: true } 
     );
 
@@ -129,8 +137,7 @@ router.put('/admin/banners/:id', adminAuth, async (req, res) => {
     console.error('Error updating banner:', error);
     res.status(400).json({ 
       success: false,
-      error: 'Failed to update banner', 
-      details: error.message 
+      error: 'Failed to update banner: ' + error.message
     });
   }
 });
@@ -161,25 +168,12 @@ router.delete('/admin/banners/:id', adminAuth, async (req, res) => {
   }
 });
 
-// Update banner order (admin only)
-router.put('/admin/banners/:id/order', adminAuth, async (req, res) => {
+// Get banner image data (for specific use cases)
+router.get('/admin/banners/:id/image', adminAuth, async (req, res) => {
   try {
-    const { sortOrder } = req.body;
-
-    if (sortOrder === undefined || sortOrder < 0) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Valid sort order is required' 
-      });
-    }
-
-    const updatedBanner = await Banner.findByIdAndUpdate(
-      req.params.id,
-      { sortOrder },
-      { new: true }
-    );
-
-    if (!updatedBanner) {
+    const banner = await Banner.findById(req.params.id).select('imageData imageUrl');
+    
+    if (!banner) {
       return res.status(404).json({ 
         success: false,
         error: 'Banner not found' 
@@ -188,48 +182,16 @@ router.put('/admin/banners/:id/order', adminAuth, async (req, res) => {
 
     res.json({ 
       success: true, 
-      data: updatedBanner,
-      message: 'Banner order updated successfully'
-    });
-  } catch (error) {
-    console.error('Error updating banner order:', error);
-    res.status(400).json({ 
-      success: false,
-      error: 'Failed to update banner order' 
-    });
-  }
-});
-
-// Bulk update banner orders (admin only)
-router.put('/admin/banners/bulk/order', adminAuth, async (req, res) => {
-  try {
-    const { banners } = req.body; // Array of { id, sortOrder }
-
-    if (!Array.isArray(banners)) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Banners array is required' 
-      });
-    }
-
-    const bulkOperations = banners.map(banner => ({
-      updateOne: {
-        filter: { _id: banner.id },
-        update: { sortOrder: banner.sortOrder }
+      data: {
+        imageData: banner.imageData,
+        imageUrl: banner.imageUrl
       }
-    }));
-
-    await Banner.bulkWrite(bulkOperations);
-
-    res.json({ 
-      success: true, 
-      message: 'Banner orders updated successfully'
     });
   } catch (error) {
-    console.error('Error updating bulk banner orders:', error);
-    res.status(400).json({ 
+    console.error('Error fetching banner image:', error);
+    res.status(500).json({ 
       success: false,
-      error: 'Failed to update banner orders' 
+      error: 'Failed to fetch banner image' 
     });
   }
 });

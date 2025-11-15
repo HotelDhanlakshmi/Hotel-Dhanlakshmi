@@ -1,41 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
-import 'swiper/css/autoplay';
 
 const Hero = () => {
   const [bannerData, setBannerData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slideIntervalRef = useRef(null);
 
   useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/api/banners'); 
-        if (!response.ok) {
-          throw new Error('Failed to fetch banners');
-        }
-        const data = await response.json();
-        if (data.success && Array.isArray(data.data)) {
-          // Sort banners by order if order field exists
-          const sortedBanners = data.data.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-          setBannerData(sortedBanners);
-        } else {
-          throw new Error('Invalid data format from server');
-        }
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchBanners();
   }, []);
+
+  // Auto slide functionality
+  useEffect(() => {
+    if (bannerData.length > 1) {
+      startAutoSlide();
+    }
+    
+    return () => {
+      if (slideIntervalRef.current) {
+        clearInterval(slideIntervalRef.current);
+      }
+    };
+  }, [bannerData.length, currentSlide]);
+
+  const fetchBanners = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/banners'); 
+      if (!response.ok) {
+        throw new Error('Failed to fetch banners');
+      }
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        // Sort banners by order
+        const sortedBanners = data.data.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        setBannerData(sortedBanners);
+      } else {
+        throw new Error('Invalid data format from server');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const startAutoSlide = () => {
+    if (slideIntervalRef.current) {
+      clearInterval(slideIntervalRef.current);
+    }
+
+    slideIntervalRef.current = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % bannerData.length);
+    }, 5000); // Change slide every 5 seconds
+  };
+
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
+    startAutoSlide(); // Reset timer when manually changing slide
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide(prev => (prev + 1) % bannerData.length);
+    startAutoSlide();
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide(prev => (prev - 1 + bannerData.length) % bannerData.length);
+    startAutoSlide();
+  };
 
   // --- Loading State ---
   if (isLoading) {
@@ -75,39 +110,19 @@ const Hero = () => {
   }
 
   return (
-    <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-800">
-      
-      <Swiper
-        modules={[Navigation, Pagination, Autoplay]}
-        spaceBetween={0}
-        slidesPerView={1}
-        loop={true}
-        autoplay={{
-          delay: 5000, // 5 seconds autoplay
-          disableOnInteraction: false, // Continue autoplay after user interaction
-          pauseOnMouseEnter: true, // Pause when user hovers
-        }}
-        pagination={{
-          clickable: true,
-          dynamicBullets: true,
-          renderBullet: function (index, className) {
-            return `<span class="${className} !w-3 !h-3 !bg-white !opacity-60 hover:!opacity-100 transition-opacity"></span>`;
-          },
-        }}
-        navigation={{
-          nextEl: '.swiper-button-next',
-          prevEl: '.swiper-button-prev',
-        }}
-        speed={800} // Smooth transition speed
-        effect="fade" // You can also use "slide" or "fade"
-        fadeEffect={{ crossFade: true }} // Crossfade effect
-        className="h-full w-full relative group"
-      >
-        {bannerData.map((slide) => (
-          <SwiperSlide key={slide._id || slide.id}>
+    <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-800 overflow-hidden">
+      {/* Slides Container */}
+      <div className="relative w-full h-full">
+        {bannerData.map((slide, index) => (
+          <div
+            key={slide._id || slide.id}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              index === currentSlide ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
             <Link to={slide.link || '/menu'} className="block w-full h-full">
               <div 
-                className="w-full h-full bg-cover bg-center bg-no-repeat transition-transform duration-700 hover:scale-105"
+                className="w-full h-full bg-cover bg-center bg-no-repeat"
                 style={{ 
                   backgroundImage: `url(${slide.imageUrl})`,
                   backgroundSize: 'cover',
@@ -115,7 +130,7 @@ const Hero = () => {
                 }}
                 aria-label={slide.altText || `Banner ${slide._id || slide.id}`}
               >
-                {/* Optional: Add overlay text for each banner */}
+                {/* Overlay text for each banner */}
                 {(slide.title || slide.subtitle) && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent text-white p-6 md:p-8">
                     <div className="max-w-4xl mx-auto">
@@ -134,29 +149,61 @@ const Hero = () => {
                 )}
               </div>
             </Link>
-          </SwiperSlide>
+          </div>
         ))}
+      </div>
 
-        {/* Custom Navigation Buttons */}
-        <div className="swiper-button-prev !w-12 !h-12 !bg-black/30 hover:!bg-black/50 !rounded-full !text-white !transition-all duration-300 group-hover:opacity-100 opacity-0 md:opacity-30">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </div>
-        
-        <div className="swiper-button-next !w-12 !h-12 !bg-black/30 hover:!bg-black/50 !rounded-full !text-white !transition-all duration-300 group-hover:opacity-100 opacity-0 md:opacity-30">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
+      {/* Navigation Arrows - Only show if multiple banners */}
+      {bannerData.length > 1 && (
+        <>
+          <button
+            onClick={prevSlide}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-black/30 hover:bg-black/60 rounded-full text-white transition-all duration-300 flex items-center justify-center"
+            aria-label="Previous slide"
+          >
+            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <button
+            onClick={nextSlide}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-black/30 hover:bg-black/60 rounded-full text-white transition-all duration-300 flex items-center justify-center"
+            aria-label="Next slide"
+          >
+            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </>
+      )}
 
-        {/* Autoplay Progress Bar */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 w-24 h-1 bg-white/30 rounded-full overflow-hidden">
-          <div className="h-full bg-orange-500 rounded-full autoplay-progress"></div>
+      {/* Slide Indicators - Only show if multiple banners */}
+      {bannerData.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex space-x-2">
+          {bannerData.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                index === currentSlide 
+                  ? 'bg-orange-500 scale-125' 
+                  : 'bg-white/60 hover:bg-white/80'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
         </div>
-      </Swiper>
+      )}
 
-      {/* "ORDER NOW" button floats on top */}
+      {/* Slide Counter */}
+      {bannerData.length > 1 && (
+        <div className="absolute top-4 right-4 z-10 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+          {currentSlide + 1} / {bannerData.length}
+        </div>
+      )}
+
+      {/* "ORDER NOW" button */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
         <Link 
           to="/menu" 
@@ -165,27 +212,6 @@ const Hero = () => {
           ORDER NOW
         </Link>
       </div>
-
-      {/* Add custom styles for autoplay progress */}
-      <style jsx>{`
-        .autoplay-progress {
-          animation: progress 5s linear infinite;
-        }
-        
-        @keyframes progress {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(0);
-          }
-        }
-        
-        .swiper-button-disabled {
-          opacity: 0.3 !important;
-          cursor: not-allowed;
-        }
-      `}</style>
     </div>
   );
 };

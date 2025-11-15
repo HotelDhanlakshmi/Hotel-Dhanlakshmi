@@ -16,10 +16,10 @@ const bannerSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  cloudinaryId: {
-    type: String,
-    required: false, // Make this optional for now
-    trim: true
+  // We'll store the image directly as base64 in MongoDB
+  imageData: {
+    type: String, // base64 encoded image
+    required: false
   },
   link: {
     type: String,
