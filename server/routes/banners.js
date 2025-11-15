@@ -55,21 +55,30 @@ router.get('/admin/banners', adminAuth, async (req, res) => {
 // Create new banner with image data (admin only)
 router.post('/admin/banners', adminAuth, async (req, res) => {
   try {
-    const { title, subtitle, imageData, imageUrl, link, altText, sortOrder, isActive } = req.body;
+    const { title, subtitle, imageData, link, altText, sortOrder, isActive } = req.body;
 
-    // Validation - either imageData or imageUrl is required
-    if (!imageData && !imageUrl) {
+    // Validation
+    if (!imageData) {
       return res.status(400).json({ 
         success: false,
-        error: 'Either image data or image URL is required' 
+        error: 'Image data is required' 
+      });
+    }
+
+    // Validate image size (3MB max)
+    const base64Size = (imageData.length * 3) / 4; // Approximate size in bytes
+    if (base64Size > 3 * 1024 * 1024) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Image size should be less than 3MB' 
       });
     }
 
     const newBanner = new Banner({
       title: title || 'New Banner',
       subtitle: subtitle || 'Discover our delicious offerings',
-      imageData: imageData || null,
-      imageUrl: imageUrl || (imageData ? `data:image/jpeg;base64,${imageData}` : ''),
+      imageData: imageData,
+      imageUrl: `data:image/jpeg;base64,${imageData}`,
       link: link || '/menu',
       altText: altText || 'Banner Image',
       sortOrder: sortOrder || 0,
@@ -95,7 +104,7 @@ router.post('/admin/banners', adminAuth, async (req, res) => {
 // Update banner (admin only)
 router.put('/admin/banners/:id', adminAuth, async (req, res) => {
   try {
-    const { title, subtitle, imageData, imageUrl, link, altText, sortOrder, isActive } = req.body;
+    const { title, subtitle, imageData, link, altText, sortOrder, isActive } = req.body;
 
     const updateData = {
       ...(title !== undefined && { title }),
@@ -108,11 +117,17 @@ router.put('/admin/banners/:id', adminAuth, async (req, res) => {
 
     // Update image data if provided
     if (imageData !== undefined) {
+      // Validate image size (3MB max)
+      const base64Size = (imageData.length * 3) / 4;
+      if (base64Size > 3 * 1024 * 1024) {
+        return res.status(400).json({ 
+          success: false,
+          error: 'Image size should be less than 3MB' 
+        });
+      }
+      
       updateData.imageData = imageData;
       updateData.imageUrl = `data:image/jpeg;base64,${imageData}`;
-    } else if (imageUrl !== undefined) {
-      updateData.imageUrl = imageUrl;
-      updateData.imageData = null; // Clear base64 data if using URL
     }
 
     const updatedBanner = await Banner.findByIdAndUpdate(
@@ -168,12 +183,25 @@ router.delete('/admin/banners/:id', adminAuth, async (req, res) => {
   }
 });
 
-// Get banner image data (for specific use cases)
-router.get('/admin/banners/:id/image', adminAuth, async (req, res) => {
+// Update banner order (admin only)
+router.put('/admin/banners/:id/order', adminAuth, async (req, res) => {
   try {
-    const banner = await Banner.findById(req.params.id).select('imageData imageUrl');
-    
-    if (!banner) {
+    const { sortOrder } = req.body;
+
+    if (sortOrder === undefined || sortOrder < 0) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Valid sort order is required' 
+      });
+    }
+
+    const updatedBanner = await Banner.findByIdAndUpdate(
+      req.params.id,
+      { sortOrder },
+      { new: true }
+    );
+
+    if (!updatedBanner) {
       return res.status(404).json({ 
         success: false,
         error: 'Banner not found' 
@@ -182,16 +210,14 @@ router.get('/admin/banners/:id/image', adminAuth, async (req, res) => {
 
     res.json({ 
       success: true, 
-      data: {
-        imageData: banner.imageData,
-        imageUrl: banner.imageUrl
-      }
+      data: updatedBanner,
+      message: 'Banner order updated successfully'
     });
   } catch (error) {
-    console.error('Error fetching banner image:', error);
-    res.status(500).json({ 
+    console.error('Error updating banner order:', error);
+    res.status(400).json({ 
       success: false,
-      error: 'Failed to fetch banner image' 
+      error: 'Failed to update banner order' 
     });
   }
 });

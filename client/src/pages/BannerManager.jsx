@@ -15,7 +15,6 @@ const BannerManager = () => {
     subtitle: '',
     imageFile: null,
     imagePreview: null,
-    imageUrl: '',
     link: '/menu',
     altText: 'Banner Image',
     sortOrder: 0,
@@ -23,7 +22,6 @@ const BannerManager = () => {
   });
   const [isEditing, setIsEditing] = useState(null);
   const [formMessage, setFormMessage] = useState(null);
-  const [activeTab, setActiveTab] = useState('upload'); // 'upload' or 'url'
 
   useEffect(() => {
     fetchBanners();
@@ -55,9 +53,9 @@ const BannerManager = () => {
         return;
       }
 
-      // Validate file size (max 2MB for MongoDB)
-      if (file.size > 2 * 1024 * 1024) {
-        setFormMessage({ type: 'error', text: 'Image size should be less than 2MB for database storage' });
+      // Validate file size (max 3MB)
+      if (file.size > 3 * 1024 * 1024) {
+        setFormMessage({ type: 'error', text: 'Image size should be less than 3MB' });
         return;
       }
 
@@ -81,13 +79,8 @@ const BannerManager = () => {
     setFormMessage(null);
 
     // Validate
-    if (activeTab === 'upload' && !formState.imageFile) {
+    if (!formState.imageFile) {
       setFormMessage({ type: 'error', text: 'Please select an image file to upload' });
-      return;
-    }
-
-    if (activeTab === 'url' && !formState.imageUrl) {
-      setFormMessage({ type: 'error', text: 'Please enter an image URL' });
       return;
     }
 
@@ -103,18 +96,12 @@ const BannerManager = () => {
       const requestBody = {
         title: formState.title,
         subtitle: formState.subtitle,
+        imageData: formState.imageFile,
         link: formState.link,
         altText: formState.altText,
         sortOrder: parseInt(formState.sortOrder) || 0,
         isActive: formState.isActive
       };
-
-      // Add image data based on active tab
-      if (activeTab === 'upload') {
-        requestBody.imageData = formState.imageFile;
-      } else {
-        requestBody.imageUrl = formState.imageUrl;
-      }
 
       const response = await fetch(url, {
         method: method,
@@ -146,16 +133,13 @@ const BannerManager = () => {
     setFormState({
       title: banner.title || '',
       subtitle: banner.subtitle || '',
-      imageFile: null,
+      imageFile: banner.imageData || null,
       imagePreview: banner.imageUrl,
-      imageUrl: banner.imageUrl,
       link: banner.link,
       altText: banner.altText || 'Banner Image',
       sortOrder: banner.sortOrder,
       isActive: banner.isActive,
     });
-    // Determine which tab to show based on whether image is stored as base64 or URL
-    setActiveTab(banner.imageData ? 'upload' : 'url');
     window.scrollTo(0, 0);
   };
 
@@ -183,19 +167,17 @@ const BannerManager = () => {
       subtitle: '',
       imageFile: null,
       imagePreview: null,
-      imageUrl: '',
       link: '/menu',
       altText: 'Banner Image',
       sortOrder: 0,
       isActive: true,
     });
     setIsEditing(null);
-    setActiveTab('upload');
   };
 
   const updateBannerOrder = async (bannerId, newOrder) => {
     try {
-      const response = await fetch(`${API_URL}/api/admin/banners/${bannerId}`, {
+      const response = await fetch(`${API_URL}/api/admin/banners/${bannerId}/order`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -206,9 +188,13 @@ const BannerManager = () => {
 
       if (response.ok) {
         fetchBanners();
+      } else {
+        const data = await response.json();
+        setFormMessage({ type: 'error', text: data.error || 'Failed to update order' });
       }
     } catch (error) {
       console.error('Error updating banner order:', error);
+      setFormMessage({ type: 'error', text: 'Failed to update banner order' });
     }
   };
 
@@ -220,90 +206,35 @@ const BannerManager = () => {
           {isEditing ? 'Edit Banner' : 'Add New Banner'}
         </h2>
 
-        {/* Tab Navigation */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="flex space-x-8">
-            <button
-              onClick={() => setActiveTab('upload')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'upload'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              📤 Upload Image (Store in Database)
-            </button>
-            <button
-              onClick={() => setActiveTab('url')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'url'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              🔗 Image URL
-            </button>
-          </nav>
-        </div>
-
         <form onSubmit={handleFormSubmit} className="space-y-4">
-          {activeTab === 'upload' ? (
-            /* File Upload Tab - Store in MongoDB */
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Upload Image (Stored in Database) *
-              </label>
-              <input 
-                type="file" 
-                accept="image/*"
-                onChange={handleFileSelect}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
-              />
-              <p className="mt-1 text-sm text-gray-500">
-                Supports JPG, PNG. Max 2MB. Image will be stored directly in database.
-              </p>
-              
-              {formState.imagePreview && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-                  <img 
-                    src={formState.imagePreview} 
-                    alt="Preview" 
-                    className="w-full max-w-md h-48 object-cover rounded-lg border shadow-sm"
-                  />
-                </div>
-              )}
-            </div>
-          ) : (
-            /* URL Tab */
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Image URL *
-              </label>
-              <input 
-                type="url" 
-                value={formState.imageUrl || ''}
-                onChange={(e) => setFormState(prev => ({ ...prev, imageUrl: e.target.value }))}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" 
-                placeholder="https://example.com/image.jpg"
-              />
-              {formState.imageUrl && (
-                <div className="mt-4">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
-                  <img 
-                    src={formState.imageUrl} 
-                    alt="Preview" 
-                    className="w-full max-w-md h-48 object-cover rounded-lg border shadow-sm"
-                    onError={(e) => {
-                      e.target.src = 'https://via.placeholder.com/400x200?text=Invalid+Image+URL';
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          )}
+          {/* File Upload */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Upload Image (Max 3MB) *
+            </label>
+            <input 
+              type="file" 
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Supports JPG, PNG, WebP. Max 3MB. Image will be stored in database.
+            </p>
+            
+            {formState.imagePreview && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Preview:</p>
+                <img 
+                  src={formState.imagePreview} 
+                  alt="Preview" 
+                  className="w-full max-w-md h-48 object-cover rounded-lg border shadow-sm"
+                />
+              </div>
+            )}
+          </div>
 
-          {/* Common Form Fields */}
+          {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">Title</label>
@@ -345,6 +276,7 @@ const BannerManager = () => {
                 value={formState.sortOrder} 
                 onChange={(e) => setFormState(prev => ({ ...prev, sortOrder: parseInt(e.target.value) || 0 }))}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" 
+                min="0"
               />
             </div>
             <div className="flex items-center pt-6">
@@ -424,12 +356,11 @@ const BannerManager = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Link</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Storage</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {banners.map(banner => (
+                {banners.map((banner, index) => (
                   <tr key={banner._id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <img 
@@ -437,14 +368,14 @@ const BannerManager = () => {
                         alt="Banner" 
                         className="w-20 h-12 object-cover rounded border"
                         onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/80x48?text=Image+Error';
+                          e.target.src = '/src/assets/banner.png';
                         }}
                       />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {banner.title || 'Untitled'}
+                          {banner.title || 'Untitled Banner'}
                         </div>
                         {banner.subtitle && (
                           <div className="text-sm text-gray-500">{banner.subtitle}</div>
@@ -458,14 +389,26 @@ const BannerManager = () => {
                       <div className="flex items-center space-x-2">
                         <button 
                           onClick={() => updateBannerOrder(banner._id, banner.sortOrder - 1)}
-                          className="text-gray-500 hover:text-gray-700"
+                          disabled={index === 0}
+                          className={`p-1 rounded ${
+                            index === 0 
+                              ? 'text-gray-300 cursor-not-allowed' 
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
                         >
                           ↑
                         </button>
-                        <span className="text-sm text-gray-700 w-8 text-center">{banner.sortOrder}</span>
+                        <span className="text-sm text-gray-700 w-8 text-center font-medium">
+                          {banner.sortOrder}
+                        </span>
                         <button 
                           onClick={() => updateBannerOrder(banner._id, banner.sortOrder + 1)}
-                          className="text-gray-500 hover:text-gray-700"
+                          disabled={index === banners.length - 1}
+                          className={`p-1 rounded ${
+                            index === banners.length - 1 
+                              ? 'text-gray-300 cursor-not-allowed' 
+                              : 'text-gray-600 hover:bg-gray-100'
+                          }`}
                         >
                           ↓
                         </button>
@@ -482,25 +425,16 @@ const BannerManager = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`text-xs px-2 py-1 rounded-full ${
-                        banner.imageData 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {banner.imageData ? 'Database' : 'URL'}
-                      </span>
-                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-3">
                       <button 
                         onClick={() => handleEditClick(banner)} 
-                        className="text-blue-600 hover:text-blue-900"
+                        className="text-blue-600 hover:text-blue-900 px-2 py-1 rounded hover:bg-blue-50"
                       >
                         Edit
                       </button>
                       <button 
                         onClick={() => handleDeleteClick(banner._id)} 
-                        className="text-red-600 hover:text-red-900"
+                        className="text-red-600 hover:text-red-900 px-2 py-1 rounded hover:bg-red-50"
                       >
                         Delete
                       </button>

@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
+// Import default banner image
+import defaultBanner from '../assets/banner.png';
+
 const Hero = () => {
   const [bannerData, setBannerData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,20 +93,30 @@ const Hero = () => {
     );
   }
   
-  // --- No Banners Fallback ---
+  // --- No Banners Fallback - Show default image ---
   if (bannerData.length === 0) {
     return (
-      <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-800 traditional-pattern flex items-center justify-center text-center p-8">
-        <div className="absolute inset-0 bg-red-800 opacity-90"></div> 
-        <div className="relative z-10">
-          <h1 className="text-5xl font-bold text-white mb-4">Welcome to Hotel Dhanlakshmi</h1>
-          <p className="text-xl text-yellow-300">Fresh and delicious meals, coming soon!</p>
-          <Link 
-            to="/menu" 
-            className="mt-6 inline-block bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors"
-          >
-            ORDER NOW
-          </Link>
+      <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-800">
+        <div 
+          className="w-full h-full bg-cover bg-center bg-no-repeat"
+          style={{ 
+            backgroundImage: `url(${defaultBanner})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-center p-8">
+            <div className="text-white">
+              <h1 className="text-5xl font-bold mb-4">Welcome to Hotel Dhanlakshmi</h1>
+              <p className="text-xl text-yellow-300 mb-8">Fresh and delicious meals</p>
+              <Link 
+                to="/menu" 
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors"
+              >
+                ORDER NOW
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -127,6 +140,10 @@ const Hero = () => {
                   backgroundImage: `url(${slide.imageUrl})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
+                }}
+                onError={(e) => {
+                  // If image fails to load, show default banner
+                  e.target.style.backgroundImage = `url(${defaultBanner})`;
                 }}
                 aria-label={slide.altText || `Banner ${slide._id || slide.id}`}
               >
@@ -193,13 +210,6 @@ const Hero = () => {
               aria-label={`Go to slide ${index + 1}`}
             />
           ))}
-        </div>
-      )}
-
-      {/* Slide Counter */}
-      {bannerData.length > 1 && (
-        <div className="absolute top-4 right-4 z-10 bg-black/50 text-white px-3 py-1 rounded-full text-sm">
-          {currentSlide + 1} / {bannerData.length}
         </div>
       )}
 
