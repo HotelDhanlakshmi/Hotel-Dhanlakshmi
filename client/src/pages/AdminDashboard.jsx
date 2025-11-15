@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 // CORRECT
 import CouponManager from "./CouponManager";
+import BannerManager from './BannerManager.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -511,6 +512,7 @@ const AdminDashboard = () => {
                 { id: 'orders', name: 'Orders' },
                 { id: 'products', name: 'Products' },
                 { id: 'coupons', name: 'Coupons' },
+                {id : 'banners' , name : "Banners"} ,
                 { id: 'settings', name: 'Settings' }
               ].map((tab) => (
                 <button
@@ -754,6 +756,10 @@ const AdminDashboard = () => {
             {activeTab === 'coupons' && (
               <CouponManager />
             )}
+
+            {activeTab === 'banners' && (
+               <BannerManager />
+              )}
 
             {/* Settings Tab */}
             {activeTab === 'settings' && (

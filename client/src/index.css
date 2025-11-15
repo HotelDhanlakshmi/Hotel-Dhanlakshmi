@@ -3,6 +3,46 @@
 /* Marathi/Devanagari Font Support */
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Mukti:wght@400;700&display=swap');
 
+/* --- Add this to your index.css file --- */
+
+/* This styles the Next/Prev arrows */
+.swiper-button-next,
+.swiper-button-prev {
+  color: #fff !important; /* White color for the arrow */
+  background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent black background */
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 50%; /* Make them circles */
+  transition: background-color 0.2s ease;
+}
+
+/* Make them stronger on hover */
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+/* Adjust arrow size */
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  font-size: 20px !important;
+  font-weight: 900;
+}
+
+/* This styles the pagination dots */
+.swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.5) !important;
+  width: 10px !important;
+  height: 10px !important;
+  opacity: 1 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #f59e0b !important; /* Yellow/Orange color for the active dot */
+}
+
+
+
 /* Maharashtrian Color Palette */
 :root {
   --saffron: #FF9933;
