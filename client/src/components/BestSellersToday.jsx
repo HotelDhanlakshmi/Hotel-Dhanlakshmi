@@ -37,16 +37,16 @@ const BestSellersToday = () => {
 
   return (
     // --- MODIFICATION: Reduced vertical padding ---
+    
     <div className="bg-white py-8">
+   
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+      <hr className="border-t-2 border-orange-300 mb-8" />
         {/* --- REMOVED: Section Divider (Start) --- */}
         
         {/* --- Centralized Header (Simplified) --- */}
         <div className="text-center mb-6">
-          <div className="bg-orange-100 inline-block rounded-full px-5 py-2 mb-3">
-            <span className="text-orange-700 font-semibold text-base">🔥 TODAY'S TOP 5</span>
-          </div>
+          
           {/* --- MODIFICATION: Reduced heading size --- */}
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
             Most Ordered Today
@@ -122,8 +122,9 @@ const BestSellersToday = () => {
         </div>
 
         {/* --- REMOVED: Section Divider (End) --- */}
-        
+        <hr className="border-t-2 border-orange-300 mb-8" />
       </div>
+      
     </div>
   );
 };
