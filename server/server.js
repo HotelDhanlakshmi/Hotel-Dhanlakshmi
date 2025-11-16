@@ -115,9 +115,6 @@ async function initializeData() {
   }
 }
 
-
-
-
 // Utility functions
 async function readJsonFile(filePath) {
   try {
@@ -166,6 +163,21 @@ async function isAdminMobile(mobile) {
   } catch (error) {
     console.error('Error checking admin mobile:', error);
     return false;
+  }
+}
+
+// Get current settings with minOrderAmount
+async function getCurrentSettings() {
+  try {
+    const settings = await Settings.getSettings();
+    return settings;
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    // Return default settings if error - CHANGED TO 0
+    return {
+      minOrderAmount: 0, // CHANGED FROM 200 to 0
+      maxCODAmount: 2000
+    };
   }
 }
 
@@ -238,7 +250,6 @@ app.put('/api/admin/banners/:id', async (req, res) => {
     res.status(400).json({ error: 'Failed to update banner', details: error.message });
   }
 });
-
 
 app.delete('/api/admin/banners/:id', async (req, res) => {
   if (req.headers['x-api-key'] !== ADMIN_KEY) {
@@ -399,7 +410,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-
 // Coupon Routes ... (For Creating a Coupon , Fetching all the Coupon and Deleting the Coupon) .
 
 app.post('/api/admin/coupons', async (req, res) => {
@@ -437,7 +447,6 @@ app.post('/api/admin/coupons', async (req, res) => {
   }
 });
 
-
 /**
  * ROUTE 2: GET ALL COUPONS
  * This runs when the CouponManager component first loads to build the list.
@@ -454,7 +463,6 @@ app.get('/api/admin/coupons', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
 
 /**
  * ROUTE 3: DELETE A COUPON
@@ -478,10 +486,6 @@ app.delete('/api/admin/coupons/:id', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
-
-
-
 
 /**
  * The "Calculation Engine".
@@ -593,7 +597,6 @@ app.post('/api/validate-coupon', async (req, res) => {
     res.status(500).json({ isValid: false, error: 'Server Error' });
   }
 });
-
 
 // Send OTP
 app.post('/api/send-otp', otpLimiter, async (req, res) => {
@@ -801,57 +804,67 @@ app.post('/api/verify-razorpay-payment', async (req, res) => {
   }
 });
 
-// Create order
-// --- This is your MODIFIED route ---
-
-// We add 'couponCode' to the destructured body
+// Create order - UPDATED WITH minOrderAmount VALIDATION
 app.post('/api/orders', async (req, res) => {
   try {
-    const { mobile, items, address, couponCode } = req.body; // <-- 1. ADDED couponCode
+    const { mobile, items, address, couponCode, paymentMethod = 'cod' } = req.body;
+
+    // --- 1. GET CURRENT SETTINGS ---
+    const settings = await getCurrentSettings();
+    const minOrderAmount = settings.minOrderAmount || 0;
+    const maxCODAmount = settings.maxCODAmount || 2000;
 
     // --- 2. SECURELY CALCULATE PRICE ---
-    // We are IGNORING the 'total' that comes from the frontend
     const { isValid, newTotal, discountAmount, subtotal, error } = await calculateFinalAmount(items, couponCode);
 
     if (!isValid) {
-      // The coupon was invalid (e.g., expired, wrong items)
-      // We will stop the order, just like your other validations
       return res.status(400).json({ error: error || 'Invalid coupon' });
     }
 
-    // We now have the secure totals:
-    // subtotal = price before discount
-    // newTotal = final price to charge
-    // discountAmount = how much was saved
-
-    // --- 3. YOUR EXISTING VALIDATIONS ---
-    console.log('Order creation request:', { mobile, items: items?.length, newTotal, address });
+    // --- 3. VALIDATE ORDER AGAINST SETTINGS ---
+    console.log('Order creation request:', { mobile, items: items?.length, newTotal, address, minOrderAmount, maxCODAmount });
 
     if (!mobile || !isValidMobile(mobile)) {
       return res.status(400).json({ error: 'Invalid mobile number' });
     }
-    // ... (all your other validations for blacklist, address, etc. remain the same) ...
 
-    // --- 4. MODIFY YOUR TOTALS VALIDATION ---
-    // We now check against the *newTotal*
-    if (!newTotal || newTotal < 200) {
-      // Note: A 100% discount could make the total 0. 
-      // You may need to adjust this rule. For now, we'll keep your min.
-      console.log('Invalid total:', newTotal);
-      return res.status(400).json({ error: 'Minimum order amount is ₹200 (after discount)' });
-    }
-    if (newTotal > 2000) {
-      console.log('Total too high:', newTotal);
-      return res.status(400).json({ error: 'Maximum COD limit is ₹2000 (after discount)' });
+    if (await isBlacklisted(mobile)) {
+      return res.status(403).json({ error: 'Mobile number is blacklisted' });
     }
 
-    // ... (your existing daily order limit check remains the same) ...
+    // Validate minimum order amount from settings
+    if (!newTotal || newTotal < minOrderAmount) {
+      console.log('Invalid total:', newTotal, 'Minimum required:', minOrderAmount);
+      return res.status(400).json({ error: `Minimum order amount is ₹${minOrderAmount}` });
+    }
+
+    // Validate COD limit from settings
+    if (paymentMethod === 'cod' && newTotal > maxCODAmount) {
+      console.log('COD limit exceeded:', newTotal, 'Max COD:', maxCODAmount);
+      return res.status(400).json({ error: `Maximum COD limit is ₹${maxCODAmount}. Please use online payment.` });
+    }
+
+    // Check daily order limit
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todaysOrders = await Order.countDocuments({
+      mobile,
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+
+    const maxDailyOrders = settings.maxDailyOrders || 5;
+    if (todaysOrders >= maxDailyOrders) {
+      return res.status(400).json({ error: 'Daily order limit reached. Please try again tomorrow.' });
+    }
 
     const orderId = `ORD${Date.now()}${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
 
     let order;
     if (mongoose.connection.readyState === 1) {
-      // --- 5. SAVE TO MONGODB (with new fields) ---
+      // --- 4. SAVE TO MONGODB (with new fields) ---
       order = await Order.create({
         orderId,
         mobile,
@@ -862,37 +875,75 @@ app.post('/api/orders', async (req, res) => {
         subtotal: subtotal,
         discountAmount: discountAmount,
         couponCode: couponCode ? couponCode.toUpperCase() : null,
-        total: newTotal, // This was 'total' before
+        total: newTotal,
 
         address,
+        paymentMethod: paymentMethod,
         estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000)
-        // Your schema default for 'status' will be used ('pending' or 'confirmed')
       });
 
-      // --- 6. INCREMENT COUPON COUNT ---
-      // This is safe to do *if* you are not taking online payment.
-      // If this is Cash on Delivery, the "payment" is confirmed now.
+      // --- 5. INCREMENT COUPON COUNT ---
       if (isValid && couponCode) {
         await Coupon.updateOne(
           { code: couponCode.toUpperCase() },
-          { $inc: { uses: 1 } } // Increment the 'uses' field by 1
+          { $inc: { uses: 1 } }
         );
         console.log(`Coupon ${couponCode} use count incremented.`);
       }
 
-      // ... (your User.findOneAndUpdate logic remains the same) ...
+      // Update user info
+      await User.findOneAndUpdate(
+        { mobile },
+        {
+          mobile,
+          deliveryAddress: address,
+          lastOrderAt: new Date()
+        },
+        { upsert: true, new: true }
+      );
 
     } else {
-      // ... (your file storage fallback) ...
-      // You should also add the new coupon fields here if you use it
+      // Fallback to file storage
+      const orders = await readJsonFile(ORDERS_FILE) || [];
+      const newOrder = {
+        id: orderId,
+        orderId,
+        mobile,
+        customerName: address.name,
+        items,
+        subtotal: subtotal,
+        discountAmount: discountAmount,
+        couponCode: couponCode ? couponCode.toUpperCase() : null,
+        total: newTotal,
+        address,
+        paymentMethod: paymentMethod,
+        status: 'confirmed',
+        timestamp: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        estimatedDelivery: new Date(Date.now() + 45 * 60 * 1000).toISOString()
+      };
+
+      orders.push(newOrder);
+      await writeJsonFile(ORDERS_FILE, orders);
+      order = newOrder;
     }
 
-    // ... (your WhatsApp service logic remains the same) ...
+    // Send WhatsApp notification
+    try {
+      if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.NODE_ENV === 'production') {
+        await whatsappService.sendOrderConfirmation(mobile, orderId, newTotal, items.length);
+        console.log(`Order confirmation sent to ${mobile}`);
+      } else {
+        console.log(`📱 Order ${orderId} created for ${mobile} - ₹${newTotal} (WhatsApp disabled in dev mode)`);
+      }
+    } catch (whatsappError) {
+      console.error('WhatsApp notification failed:', whatsappError.message);
+    }
 
     res.status(201).json({
       success: true,
       message: 'Order created successfully',
-      data: order // 'order' is now the full mongoose document
+      data: order
     });
   } catch (error) {
     console.error('Error creating order:', error);

@@ -17,14 +17,12 @@ const CheckoutNew = () => {
   const { cart, userInfo, dispatch } = useApp();
   const navigate = useNavigate();
 
-  // Auto-fill from saved user info (guest-first approach)
+  // Only mobile number and optional address fields
   const [formData, setFormData] = useState({
-    name: userInfo.deliveryAddress?.name || '',
     phone: userInfo.mobile || '',
     address: userInfo.deliveryAddress?.street || '',
     city: userInfo.deliveryAddress?.city || '',
-    pincode: userInfo.deliveryAddress?.pincode || '',
-    email: userInfo.email || ''
+    pincode: userInfo.deliveryAddress?.pincode || ''
   });
   
   const [errors, setErrors] = useState({});
@@ -53,9 +51,9 @@ const CheckoutNew = () => {
         type: 'UPDATE_USER_INFO',
         payload: {
           mobile: formData.phone,
-          email: formData.email,
+          email: '', // No email
           deliveryAddress: {
-            name: formData.name,
+            name: 'Customer', // Default name
             street: formData.address,
             city: formData.city,
             state: 'Maharashtra',
@@ -81,34 +79,9 @@ const CheckoutNew = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    // Name validation
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-
-    // Phone validation
+    // Phone validation (only required field)
     if (!formData.phone || !/^[6-9]\d{9}$/.test(formData.phone)) {
       newErrors.phone = 'Please enter a valid 10-digit mobile number';
-    }
-
-    // Address validation
-    if (!formData.address.trim()) {
-      newErrors.address = 'Address is required';
-    }
-
-    // City validation
-    if (!formData.city.trim()) {
-      newErrors.city = 'City is required';
-    }
-
-    // Pincode validation
-    if (!formData.pincode || !/^\d{6}$/.test(formData.pincode)) {
-      newErrors.pincode = 'Please enter a valid 6-digit pincode';
-    }
-
-    // Order amount validation
-    if (total < 200) {
-      newErrors.amount = 'Minimum order amount is ₹200';
     }
 
     if (paymentMethod === 'cod' && total > 2000) {
@@ -189,8 +162,8 @@ const CheckoutNew = () => {
           });
         },
         prefill: {
-          name: formData.name,
-          email: formData.email,
+          name: 'Customer', // Default name
+          email: '', // No email
           contact: formData.phone
         },
         theme: {
@@ -215,6 +188,15 @@ const CheckoutNew = () => {
 
   const createOrder = async (orderDetails) => {
     try {
+      // Prepare address data - use provided values or defaults
+      const addressData = {
+        name: 'Customer', // Default name
+        street: formData.address || 'Not Provided',
+        city: formData.city || 'Not Provided',
+        state: 'Maharashtra',
+        pincode: formData.pincode || '000000'
+      };
+
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,14 +207,10 @@ const CheckoutNew = () => {
           subtotal: subtotal,
           discountAmount: discount,
           couponCode: appliedCoupon?.code,
-          address: {
-            name: formData.name,
-            street: formData.address,
-            city: formData.city,
-            state: 'Maharashtra',
-            pincode: formData.pincode
-          },
-          email: formData.email,
+          // Use default name
+          customerName: 'Customer',
+          address: addressData,
+          email: '', // No email
           paymentMethod: orderDetails.paymentMethod || paymentMethod,
           paymentId: orderDetails.paymentId,
           razorpayOrderId: orderDetails.razorpayOrderId
@@ -269,12 +247,14 @@ const CheckoutNew = () => {
       mobile: formData.phone,
       items: cart,
       total: total,
+      // Use default values
+      customerName: 'Customer',
       address: {
-        name: formData.name,
-        street: formData.address,
-        city: formData.city,
+        name: 'Customer',
+        street: formData.address || 'Not Provided',
+        city: formData.city || 'Not Provided',
         state: 'Maharashtra',
-        pincode: formData.pincode
+        pincode: formData.pincode || '000000'
       }
     };
 
@@ -315,26 +295,10 @@ const CheckoutNew = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column - Customer Details */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Contact Information */}
+          {/* Contact Information - Only Mobile Number */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">Contact Information</h3>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your name"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
-                    errors.name ? 'border-red-500' : 'border-gray-200'
-                  }`}
-                />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-              </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number <span className="text-red-500">*</span>
@@ -350,79 +314,65 @@ const CheckoutNew = () => {
                   maxLength="10"
                 />
                 {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email (Optional)
-                </label>
-                <input
-                  type="email"
-                  placeholder="your@email.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all"
-                />
+                <p className="text-sm text-gray-500 mt-1">
+                  We'll use this number to contact you about your order and delivery
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Delivery Address */}
+          {/* Delivery Address - Optional
           <div className="bg-white rounded-lg shadow-md p-6">
-            <h3 className="text-xl font-semibold text-gray-800 mb-4">Delivery Address</h3>
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Delivery Address <span className="text-sm font-normal text-gray-500">(Optional)</span>
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Providing your address helps us deliver faster and more accurately. If not provided, we'll call you for delivery details.
+            </p>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Street Address <span className="text-red-500">*</span>
+                  Street Address
                 </label>
                 <textarea
-                  placeholder="House no., Building name, Street"
+                  placeholder="House no., Building name, Street (Optional)"
                   value={formData.address}
                   onChange={(e) => handleInputChange('address', e.target.value)}
                   rows="3"
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
-                    errors.address ? 'border-red-500' : 'border-gray-200'
-                  }`}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all"
                 />
-                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City <span className="text-red-500">*</span>
+                    City
                   </label>
                   <input
                     type="text"
-                    placeholder="City"
+                    placeholder="City (Optional)"
                     value={formData.city}
                     onChange={(e) => handleInputChange('city', e.target.value)}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
-                      errors.city ? 'border-red-500' : 'border-gray-200'
-                    }`}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all"
                   />
-                  {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Pincode <span className="text-red-500">*</span>
+                    Pincode
                   </label>
                   <input
                     type="text"
-                    placeholder="6-digit pincode"
+                    placeholder="6-digit pincode (Optional)"
                     value={formData.pincode}
                     onChange={(e) => handleInputChange('pincode', e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className={`w-full px-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
-                      errors.pincode ? 'border-red-500' : 'border-gray-200'
-                    }`}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all"
                     maxLength="6"
                   />
-                  {errors.pincode && <p className="text-red-500 text-sm mt-1">{errors.pincode}</p>}
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Payment Method */}
           <div className="bg-white rounded-lg shadow-md p-6">

@@ -11,9 +11,13 @@ const orderSchema = new mongoose.Schema({
     required: true,
     match: /^[6-9]\d{9}$/
   },
+  // customerName: {
+  //   type: String,
+  //   required: true
+  // },
   customerName: {
     type: String,
-    required: true
+    default: 'Walk-in Customer' // Default value since we're not collecting name
   },
   items: [{
     id: String,
@@ -61,12 +65,19 @@ const orderSchema = new mongoose.Schema({
   },
   // --- END OF MODIFIED SECTION ---
 
+  // address: {
+  //   name: { type: String, required: true },
+  //   street: { type: String, required: true },
+  //   city: { type: String, required: true },
+  //   state: { type: String, default: 'Maharashtra' },
+  //   pincode: { type: String, required: true, match: /^\d{6}$/ }
+  // },
   address: {
-    name: { type: String, required: true },
-    street: { type: String, required: true },
-    city: { type: String, required: true },
+    name: { type: String, default: 'Not Provided' },
+    street: { type: String, default: 'Not Provided' },
+    city: { type: String, default: 'Not Provided' },
     state: { type: String, default: 'Maharashtra' },
-    pincode: { type: String, required: true, match: /^\d{6}$/ }
+    pincode: { type: String, default: '000000' }
   },
   status: {
     type: String,
