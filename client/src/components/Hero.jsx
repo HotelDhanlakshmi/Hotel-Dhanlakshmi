@@ -20,7 +20,6 @@ const Hero = () => {
     if (bannerData.length > 1) {
       startAutoSlide();
     }
-
     return () => {
       if (slideIntervalRef.current) {
         clearInterval(slideIntervalRef.current);
@@ -30,7 +29,6 @@ const Hero = () => {
 
   const fetchBanners = async () => {
     try {
-      // Use environment variable for production, localhost for development
       const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const response = await fetch(`${API_BASE_URL}/api/banners`);
 
@@ -39,7 +37,6 @@ const Hero = () => {
       }
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
-        // Sort banners by order
         const sortedBanners = data.data.sort(
           (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
         );
@@ -59,15 +56,14 @@ const Hero = () => {
     if (slideIntervalRef.current) {
       clearInterval(slideIntervalRef.current);
     }
-
     slideIntervalRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerData.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 5000);
   };
 
   const goToSlide = (index) => {
     setCurrentSlide(index);
-    startAutoSlide(); // Reset timer when manually changing slide
+    startAutoSlide();
   };
 
   const nextSlide = () => {
@@ -85,8 +81,8 @@ const Hero = () => {
   // --- Loading State ---
   if (isLoading) {
     return (
-      // --- HEIGHT INCREASED ---
-      <div className="relative w-full h-[80vh] md:h-[95vh] bg-gray-200 flex items-center justify-center">
+      // --- HEIGHT UPDATED ---
+      <div className="relative w-full h-[50vh] md:h-[100vh] bg-gray-200 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
@@ -95,18 +91,18 @@ const Hero = () => {
   // --- Error State ---
   if (error) {
     return (
-      // --- HEIGHT INCREASED ---
-      <div className="relative w-full h-[80vh] md:h-[95vh] bg-red-100 flex items-center justify-center text-red-700">
+      // --- HEIGHT UPDATED ---
+      <div className="relative w-full h-[50vh] md:h-[100vh] bg-red-100 flex items-center justify-center text-red-700">
         <p>Error: {error}</p>
       </div>
     );
   }
 
-  // --- No Banners Fallback - Show default image ---
+  // --- No Banners Fallback ---
   if (bannerData.length === 0) {
     return (
-      // --- HEIGHT INCREASED ---
-      <div className="relative w-full h-[80vh] md:h-[95vh] bg-red-800">
+      // --- HEIGHT UPDATED ---
+      <div className="relative w-full h-[50vh] md:h-[100vh] bg-red-800">
         <div
           className="w-full h-full bg-cover bg-center bg-no-repeat"
           style={{
@@ -116,7 +112,7 @@ const Hero = () => {
           }}
         >
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-center p-8">
-            <div className="text-white">
+            <div className="relative z-10 text-white">
               <h1 className="text-5xl font-bold mb-4">
                 Welcome to Hotel Dhanlakshmi
               </h1>
@@ -137,8 +133,8 @@ const Hero = () => {
   }
 
   return (
-    // --- HEIGHT INCREASED ---
-    <div className="relative w-full h-[80vh] md:h-[95vh] bg-red-800 overflow-hidden">
+    // --- Main Slider Container (HEIGHT UPDATED) ---
+    <div className="relative w-full h-[50vh] md:h-[100vh] bg-red-800 overflow-hidden">
       {/* Slides Container */}
       <div className="relative w-full h-full">
         {bannerData.map((slide, index) => (
@@ -157,8 +153,8 @@ const Hero = () => {
                   backgroundPosition: "center",
                 }}
                 onError={(e) => {
-                  // If image fails to load, show default banner
                   e.target.style.backgroundImage = `url(${defaultBanner})`;
+                  e.target.style.backgroundSize = "cover";
                 }}
                 aria-label={slide.altText || `Banner ${slide._id || slide.id}`}
               >
@@ -185,7 +181,7 @@ const Hero = () => {
         ))}
       </div>
 
-      {/* Navigation Arrows - Only show if multiple banners */}
+      {/* Navigation Arrows */}
       {bannerData.length > 1 && (
         <>
           <button
@@ -193,18 +189,8 @@ const Hero = () => {
             className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-black/30 hover:bg-black/60 rounded-full text-white transition-all duration-300 flex items-center justify-center"
             aria-label="Previous slide"
           >
-            <svg
-              className="w-5 h-5 md:w-6 md:h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
-              />
+            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
@@ -213,24 +199,14 @@ const Hero = () => {
             className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-black/30 hover:bg-black/60 rounded-full text-white transition-all duration-300 flex items-center justify-center"
             aria-label="Next slide"
           >
-            <svg
-              className="w-5 h-5 md:w-6 md:h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5l7 7-7 7"
-              />
+            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
           </button>
         </>
       )}
 
-      {/* Slide Indicators - Only show if multiple banners */}
+      {/* Slide Indicators */}
       {bannerData.length > 1 && (
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex space-x-2">
           {bannerData.map((_, index) => (
@@ -259,6 +235,7 @@ const Hero = () => {
       </div>
     </div>
   );
-};
+ };
+
 
 export default Hero;
