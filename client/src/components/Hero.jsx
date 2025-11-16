@@ -31,7 +31,6 @@ const Hero = () => {
     if (bannerData.length > 1) {
       startAutoSlide();
     }
-
     return () => {
       if (slideIntervalRef.current) {
         clearInterval(slideIntervalRef.current);
@@ -41,7 +40,6 @@ const Hero = () => {
 
   const fetchBanners = async () => {
     try {
-      // Use environment variable for production, localhost for development
       const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
       const response = await fetch(`${API_BASE_URL}/api/banners`);
 
@@ -50,7 +48,6 @@ const Hero = () => {
       }
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
-        // Sort banners by order
         const sortedBanners = data.data.sort(
           (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
         );
@@ -70,15 +67,14 @@ const Hero = () => {
     if (slideIntervalRef.current) {
       clearInterval(slideIntervalRef.current);
     }
-
     slideIntervalRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerData.length);
-    }, 5000); // Change slide every 5 seconds
+    }, 5000);
   };
 
   const goToSlide = (index) => {
     setCurrentSlide(index);
-    startAutoSlide(); // Reset timer when manually changing slide
+    startAutoSlide();
   };
 
   const nextSlide = () => {
@@ -111,7 +107,7 @@ const Hero = () => {
     );
   }
 
-  // --- No Banners Fallback - Show default image ---
+  // --- No Banners Fallback ---
   if (bannerData.length === 0) {
     return (
       <div className={`banner-container relative w-full overflow-hidden ${isMobile ? '' : 'h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[90vh]'}`}>
@@ -183,8 +179,8 @@ const Hero = () => {
                   }),
                 }}
                 onError={(e) => {
-                  // If image fails to load, show default banner
                   e.target.style.backgroundImage = `url(${defaultBanner})`;
+                  e.target.style.backgroundSize = "cover";
                 }}
                 aria-label={slide.altText || `Banner ${slide._id || slide.id}`}
               >
@@ -211,7 +207,7 @@ const Hero = () => {
         ))}
       </div>
 
-      {/* Navigation Arrows - Only show if multiple banners */}
+      {/* Navigation Arrows */}
       {bannerData.length > 1 && (
         <>
           <button
@@ -256,7 +252,7 @@ const Hero = () => {
         </>
       )}
 
-      {/* Slide Indicators - Only show if multiple banners */}
+      {/* Slide Indicators */}
       {bannerData.length > 1 && (
         <div className="absolute bottom-16 sm:bottom-20 left-1/2 transform -translate-x-1/2 z-20 flex space-x-2">
           {bannerData.map((_, index) => (
@@ -285,6 +281,7 @@ const Hero = () => {
       </div>
     </div>
   );
-};
+ };
+
 
 export default Hero;
