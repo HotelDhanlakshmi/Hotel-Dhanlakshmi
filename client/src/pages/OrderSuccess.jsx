@@ -172,8 +172,8 @@ const OrderSuccess = () => {
             <div>
               <p className="font-medium text-gray-800 mb-1">Need Help?</p>
               <p className="text-sm text-gray-600">
-                Contact us at <a href="tel:+919876543210" className="text-orange-600 font-semibold">+91 98765 43210</a>
-                {' '}or email <a href="mailto:support@hoteldhanlakshmi.com" className="text-orange-600 font-semibold">support@hoteldhanlakshmi.com</a>
+                Contact us at <a href="tel:+917276133639" className="text-orange-600 font-semibold">+91 7276133639</a>
+                {' '}or email <a href="mailto:hoteldhanlakshmi2025@gmail.com" className="text-orange-600 font-semibold">hoteldhanlakshmi2025@gmail.com</a>
               </p>
             </div>
           </div>
