@@ -152,22 +152,26 @@ const Hero = () => {
   return (
     <div className={`banner-container relative w-full overflow-hidden ${isMobile ? '' : 'h-[50vh] sm:h-[60vh] md:h-[70vh] lg:h-[90vh]'}`}>
       {/* Slides Container */}
-      <div className={`relative w-full ${isMobile ? '' : 'h-full'}`}>
+      <div className={`relative w-full ${isMobile ? '' : 'h-full'}`} style={{ height: isMobile ? 'auto' : '100%' }}>
         {bannerData.map((slide, index) => (
           <div
             key={slide._id || slide.id}
             className={`${isMobile ? 'relative' : 'absolute inset-0'} transition-opacity duration-1000 ease-in-out ${
               index === currentSlide ? "opacity-100" : isMobile ? "hidden" : "opacity-0"
             }`}
-            style={{ maxWidth: '100%', width: '100%' }}
+            style={{ 
+              maxWidth: '100%', 
+              width: '100%',
+              ...(isMobile ? {} : { height: '100%' })
+            }}
           >
-            <Link to={slide.link || "/menu"} className="block w-full">
+            <Link to={slide.link || "/menu"} className={`block w-full ${isMobile ? '' : 'h-full'}`}>
               <div
-                className="banner-image w-full bg-center bg-no-repeat"
+                className={`banner-image w-full bg-center bg-no-repeat ${isMobile ? '' : 'h-full'}`}
                 style={{
                   backgroundImage: `url(${slide.imageUrl})`,
                   backgroundSize: isMobile ? '100% auto' : 'cover',
-                  backgroundPosition: 'center top',
+                  backgroundPosition: isMobile ? 'center top' : 'center',
                   backgroundRepeat: 'no-repeat',
                   maxWidth: '100%',
                   width: '100%',
@@ -176,6 +180,7 @@ const Hero = () => {
                     height: 0,
                   } : {
                     height: '100%',
+                    minHeight: '100%',
                   }),
                 }}
                 onError={(e) => {

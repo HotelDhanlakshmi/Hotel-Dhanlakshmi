@@ -69,30 +69,33 @@ const Home = () => {
       {/* Best Sellers Today */}
       <BestSellersToday />
 
-      {/* Search Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-md mx-auto">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search for delicious food..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-            />
-            <svg className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
+      {/* Sticky Search Bar and Filters */}
+      <div className="sticky top-16 z-30 bg-white shadow-md border-b-2 border-orange-200">
+        {/* Search Bar */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
+          <div className="max-w-md mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search for delicious food..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base"
+              />
+              <svg className="absolute left-3 top-2.5 sm:top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Category Filter */}
-      <CategoryFilter 
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
+        {/* Category Filter */}
+        <CategoryFilter 
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+      </div>
 
       {/* Menu Items */}
       <div id="menu-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
