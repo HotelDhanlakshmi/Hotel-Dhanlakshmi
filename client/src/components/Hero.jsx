@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 
 // Import default banner image
-import defaultBanner from '../assets/banner.png';
+import defaultBanner from "../assets/banner.png";
 
 const Hero = () => {
   const [bannerData, setBannerData] = useState([]);
@@ -20,7 +20,7 @@ const Hero = () => {
     if (bannerData.length > 1) {
       startAutoSlide();
     }
-    
+
     return () => {
       if (slideIntervalRef.current) {
         clearInterval(slideIntervalRef.current);
@@ -30,17 +30,22 @@ const Hero = () => {
 
   const fetchBanners = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/banners'); 
+      // Use environment variable for production, localhost for development
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+      const response = await fetch(`${API_BASE_URL}/api/banners`);
+
       if (!response.ok) {
-        throw new Error('Failed to fetch banners');
+        throw new Error("Failed to fetch banners");
       }
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
         // Sort banners by order
-        const sortedBanners = data.data.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+        const sortedBanners = data.data.sort(
+          (a, b) => (a.sortOrder || 0) - (b.sortOrder || 0)
+        );
         setBannerData(sortedBanners);
       } else {
-        throw new Error('Invalid data format from server');
+        throw new Error("Invalid data format from server");
       }
     } catch (err) {
       console.error(err);
@@ -56,7 +61,7 @@ const Hero = () => {
     }
 
     slideIntervalRef.current = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % bannerData.length);
+      setCurrentSlide((prev) => (prev + 1) % bannerData.length);
     }, 5000); // Change slide every 5 seconds
   };
 
@@ -66,12 +71,14 @@ const Hero = () => {
   };
 
   const nextSlide = () => {
-    setCurrentSlide(prev => (prev + 1) % bannerData.length);
+    setCurrentSlide((prev) => (prev + 1) % bannerData.length);
     startAutoSlide();
   };
 
   const prevSlide = () => {
-    setCurrentSlide(prev => (prev - 1 + bannerData.length) % bannerData.length);
+    setCurrentSlide(
+      (prev) => (prev - 1 + bannerData.length) % bannerData.length
+    );
     startAutoSlide();
   };
 
@@ -92,25 +99,29 @@ const Hero = () => {
       </div>
     );
   }
-  
+
   // --- No Banners Fallback - Show default image ---
   if (bannerData.length === 0) {
     return (
       <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-800">
-        <div 
+        <div
           className="w-full h-full bg-cover bg-center bg-no-repeat"
-          style={{ 
+          style={{
             backgroundImage: `url(${defaultBanner})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center'
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         >
           <div className="absolute inset-0 bg-black/30 flex items-center justify-center text-center p-8">
             <div className="text-white">
-              <h1 className="text-5xl font-bold mb-4">Welcome to Hotel Dhanlakshmi</h1>
-              <p className="text-xl text-yellow-300 mb-8">Fresh and delicious meals</p>
-              <Link 
-                to="/menu" 
+              <h1 className="text-5xl font-bold mb-4">
+                Welcome to Hotel Dhanlakshmi
+              </h1>
+              <p className="text-xl text-yellow-300 mb-8">
+                Fresh and delicious meals
+              </p>
+              <Link
+                to="/menu"
                 className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors"
               >
                 ORDER NOW
@@ -130,16 +141,16 @@ const Hero = () => {
           <div
             key={slide._id || slide.id}
             className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              index === currentSlide ? 'opacity-100' : 'opacity-0'
+              index === currentSlide ? "opacity-100" : "opacity-0"
             }`}
           >
-            <Link to={slide.link || '/menu'} className="block w-full h-full">
-              <div 
+            <Link to={slide.link || "/menu"} className="block w-full h-full">
+              <div
                 className="w-full h-full bg-cover bg-center bg-no-repeat"
-                style={{ 
+                style={{
                   backgroundImage: `url(${slide.imageUrl})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center'
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
                 }}
                 onError={(e) => {
                   // If image fails to load, show default banner
@@ -178,18 +189,38 @@ const Hero = () => {
             className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-black/30 hover:bg-black/60 rounded-full text-white transition-all duration-300 flex items-center justify-center"
             aria-label="Previous slide"
           >
-            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-5 h-5 md:w-6 md:h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
-          
+
           <button
             onClick={nextSlide}
             className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 md:w-12 md:h-12 bg-black/30 hover:bg-black/60 rounded-full text-white transition-all duration-300 flex items-center justify-center"
             aria-label="Next slide"
           >
-            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="w-5 h-5 md:w-6 md:h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         </>
@@ -203,9 +234,9 @@ const Hero = () => {
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentSlide 
-                  ? 'bg-orange-500 scale-125' 
-                  : 'bg-white/60 hover:bg-white/80'
+                index === currentSlide
+                  ? "bg-orange-500 scale-125"
+                  : "bg-white/60 hover:bg-white/80"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -215,8 +246,8 @@ const Hero = () => {
 
       {/* "ORDER NOW" button */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
-        <Link 
-          to="/menu" 
+        <Link
+          to="/menu"
           className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
         >
           ORDER NOW
