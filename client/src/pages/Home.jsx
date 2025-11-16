@@ -27,7 +27,6 @@ const Home = () => {
           const menuData = await response.json();
           setCategories(menuData.categories || []);
           setAllMenuItems(menuData.items || []);
-          // Show first 8 items initially
           setFilteredItems((menuData.items || []).slice(0, 8));
         }
       } catch (error) {
@@ -50,12 +49,10 @@ const Home = () => {
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
-    // This logic is specific to your Home page, it's fine
     if (selectedCategory === 'all') {
-      setFilteredItems(items); // Show all items
+      setFilteredItems(items);
     } else {
-      setFilteredItems(items.slice(0, 8)); // Limit to 8 for specific categories
+      setFilteredItems(items.slice(0, 8));
     }
   }, [selectedCategory, searchQuery, allMenuItems]);
 
@@ -74,9 +71,8 @@ const Home = () => {
       {/* Best Sellers Today */}
       <BestSellersToday />
 
-      {/* Sticky Search Bar and Filters */}
-      <div className="sticky top-16 z-30 bg-white shadow-md border-b-2 border-orange-200">
-        {/* Search Bar */}
+      {/* Search Bar - Not Sticky */}
+      <div className="bg-white border-b border-orange-200">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
           <div className="max-w-md mx-auto">
             <div className="relative">
@@ -93,14 +89,14 @@ const Home = () => {
             </div>
           </div>
         </div>
-
-        {/* Category Filter */}
-        <CategoryFilter 
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
       </div>
+
+      {/* Category Filter - Now handles its own sticky positioning */}
+      <CategoryFilter 
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
 
       {/* Menu Items */}
       <div id="menu-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

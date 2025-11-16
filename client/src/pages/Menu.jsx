@@ -59,9 +59,8 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      {/* Sticky Search Bar and Filters */}
-      <div className="sticky top-16 z-30 bg-white shadow-md border-b-2 border-orange-200">
-        {/* Search Bar */}
+      {/* Search Bar - Not Sticky */}
+      <div className="bg-white border-b border-orange-200">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
           <div className="max-w-2xl mx-auto">
             <div className="relative">
@@ -78,14 +77,14 @@ const Menu = () => {
             </div>
           </div>
         </div>
-
-        {/* Category Filter */}
-        <CategoryFilter 
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
       </div>
+
+      {/* Category Filter - Now handles its own sticky positioning */}
+      <CategoryFilter 
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
 
       {/* Menu Items */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
