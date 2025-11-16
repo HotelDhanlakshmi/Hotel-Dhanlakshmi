@@ -32,12 +32,13 @@ const CheckoutNew = () => {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
 
-  // Calculate totals
+  // Calculate totals - NO TAXES
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryFee = 0; // Free delivery
-  const taxes = Math.round(subtotal * 0.05); // 5% tax
+  // REMOVED TAXES CALCULATION
   const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const total = subtotal + deliveryFee + taxes - discount;
+  // Total is now just subtotal minus discount (NO TAXES)
+  const total = subtotal - discount;
 
   // Load Razorpay on component mount
   useEffect(() => {
@@ -321,7 +322,7 @@ const CheckoutNew = () => {
             </div>
           </div>
 
-          {/* Delivery Address - Optional
+          {/* Delivery Address - Optional */}
           <div className="bg-white rounded-lg shadow-md p-6">
             <h3 className="text-xl font-semibold text-gray-800 mb-4">
               Delivery Address <span className="text-sm font-normal text-gray-500">(Optional)</span>
@@ -372,7 +373,7 @@ const CheckoutNew = () => {
                 </div>
               </div>
             </div>
-          </div> */}
+          </div>
 
           {/* Payment Method */}
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -477,7 +478,7 @@ const CheckoutNew = () => {
               )}
             </div>
 
-            {/* Price Breakdown */}
+            {/* Price Breakdown - NO TAXES */}
             <div className="space-y-3 mb-6">
               <div className="flex justify-between">
                 <span className="text-gray-600">Subtotal</span>
@@ -493,10 +494,9 @@ const CheckoutNew = () => {
                 <span className="text-gray-600">Delivery Fee</span>
                 <span className="font-semibold text-green-600">FREE</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Taxes (5%)</span>
-                <span className="font-semibold">₹{taxes}</span>
-              </div>
+              
+              {/* REMOVED TAXES LINE */}
+              
               <hr />
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Total</span>
