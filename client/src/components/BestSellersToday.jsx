@@ -20,69 +20,88 @@ const BestSellersToday = () => {
         setBestSellers(data.data || []);
       }
     } catch (error) {
-      // Silently fail - not critical
+      // Silently fail
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddToCart = (product) => {
+    // We pass the full 'product' object to the cart
     dispatch({ type: 'ADD_TO_CART', payload: product });
   };
 
   if (loading || bestSellers.length === 0) {
-    return null; // Don't show anything if loading or no data
+    return null; 
   }
 
   return (
-    <div className="bg-gradient-to-r from-orange-500 to-red-500 py-6">
+    // --- MODIFICATION: Reduced vertical padding ---
+    <div className="bg-white py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Compact Header */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-1.5">
-              <span className="text-white font-semibold text-sm">🔥 TODAY'S TOP 5</span>
-            </div>
-            <h2 className="text-xl md:text-2xl font-bold text-white">
-              Most Ordered Today
-            </h2>
+        
+        {/* --- REMOVED: Section Divider (Start) --- */}
+        
+        {/* --- Centralized Header (Simplified) --- */}
+        <div className="text-center mb-6">
+          <div className="bg-orange-100 inline-block rounded-full px-5 py-2 mb-3">
+            <span className="text-orange-700 font-semibold text-base">🔥 TODAY'S TOP 5</span>
           </div>
-          <p className="text-orange-100 text-xs hidden md:block">
-            ⏰ Updated daily
-          </p>
+          {/* --- MODIFICATION: Reduced heading size --- */}
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+            Most Ordered Today
+          </h2>
+          {/* --- REMOVED: Subtitle p tag --- */}
         </div>
 
-        {/* Horizontal Scroll Cards - More Compact */}
-        <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide snap-x snap-mandatory">
+        {/* --- Card Grid (Smaller Cards) --- */}
+        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory justify-start md:justify-center">
           {bestSellers.map((item, index) => (
             <div
-              key={item.id}
-              className="flex-shrink-0 w-48 bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-all duration-300 snap-start"
+              key={item.product.id}
+              // --- MODIFICATION: Made card smaller and removed hover effect ---
+              className="flex-shrink-0 w-48 bg-white rounded-xl shadow-lg overflow-hidden snap-start border border-gray-100"
             >
-              {/* Compact Header with Badge */}
-              <div className="relative bg-gradient-to-br from-orange-100 to-red-100 h-20 flex items-center justify-center">
-                <div className="absolute top-1 left-1 bg-orange-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs">
+              {/* Product Image/Emoji Section */}
+              <div className="relative bg-gradient-to-br from-orange-50 to-red-50 h-28 flex items-center justify-center">
+                {/* Ranking Badge */}
+                <div className="absolute top-2 left-2 bg-orange-600 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-xs shadow-md">
                   #{index + 1}
                 </div>
-                <div className="absolute top-1 right-1 bg-green-500 text-white rounded-full px-2 py-0.5 text-xs font-semibold">
-                  {item.soldCount}
+                {/* Sold Count Badge */}
+                <div className="absolute top-2 right-2 bg-green-500 text-white rounded-full px-2 py-0.5 text-xs font-semibold shadow-md">
+                  {item.soldCount} Sold
                 </div>
-                <span className="text-3xl">
-                  {item.product?.type === 'veg' ? '🥗' : '🍗'}
-                </span>
+
+                {/* Image or Emoji Display */}
+                {item.product?.image ? (
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  // --- MODIFICATION: Smaller emoji ---
+                  <span className="text-4xl">
+                    {item.product?.type === 'veg' ? '🥗' : '🍗'}
+                  </span>
+                )}
               </div>
 
-              {/* Compact Product Info */}
-              <div className="p-3">
-                <h3 className="font-bold text-gray-800 text-xs mb-1 line-clamp-2 h-8">
-                  {item.name}
+              {/* Product Info */}
+              <div className="p-3 flex flex-col justify-between flex-grow">
+                {/* Name */}
+                <h3 className="font-bold text-gray-800 text-sm mb-2 line-clamp-2 h-10">
+                  {item.product.name}
                 </h3>
                 
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-base font-bold text-orange-600">
-                    ₹{item.product?.price}
+                  {/* Price */}
+                  <span className="text-lg font-bold text-orange-700">
+                    ₹{item.product.price}
                   </span>
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  {/* Type */}
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
                     item.product?.type === 'veg' 
                       ? 'bg-green-100 text-green-700' 
                       : 'bg-red-100 text-red-700'
@@ -101,6 +120,9 @@ const BestSellersToday = () => {
             </div>
           ))}
         </div>
+
+        {/* --- REMOVED: Section Divider (End) --- */}
+        
       </div>
     </div>
   );
