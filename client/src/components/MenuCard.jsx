@@ -140,11 +140,7 @@ const MenuCard = ({ item, onAddToCart }) => {
             {item.name}
           </h3>
           {/* This now uses the 'marathiName' variable we created */}
-          {marathiName && (
-            <h4 className="text-sm font-medium text-gray-600 marathi-text line-clamp-1">
-              {marathiName}
-            </h4>
-          )}
+          
         </div>
         {/* --- END OF MODIFICATION --- */}
         
@@ -158,9 +154,6 @@ const MenuCard = ({ item, onAddToCart }) => {
             <span>Add to Cart</span>
           </span>
           
-          <div className="text-xs opacity-90 marathi-text mt-1">
-            कार्टमध्ये जोडा
-          </div>
 
         </button>
       </div>
