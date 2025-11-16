@@ -54,10 +54,13 @@
   --royal-purple: #663399;
 }
 
-/* Prevent horizontal overflow */
-html, body {
+body {
   overflow-x: hidden;
   max-width: 100%;
+}
+
+html {
+  /* Remove overflow-x: hidden from html */
 }
 
 /* Banner responsive fixes */
@@ -247,4 +250,26 @@ html, body {
   mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   z-index: -1;
+}
+
+/* Ensure no parent has transform/overflow that breaks sticky */
+.sticky-fix {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Mobile-specific fixes */
+@media (max-width: 640px) {
+  .sticky-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  .content-with-sticky {
+    margin-top: 120px; /* Adjust based on your header height */
+  }
 }

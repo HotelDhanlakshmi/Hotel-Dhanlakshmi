@@ -4,7 +4,7 @@ const CategoryFilter = ({ categories, selectedCategory, onCategoryChange }) => {
   const allCategories = [{ id: 'all', name: 'All Items' }, ...categories];
 
   return (
-    <div className="bg-white shadow-traditional border-y-2 maharashtrian-border w-full max-w-full overflow-hidden">
+    <div className="bg-white shadow-traditional border-y-2 maharashtrian-border sticky top-16 z-30 w-full">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
         <div className="text-center mb-2 sm:mb-3">
           <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-1">
