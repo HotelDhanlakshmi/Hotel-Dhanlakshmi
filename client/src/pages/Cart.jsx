@@ -23,7 +23,6 @@ const Cart = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-
   if (cart.length === 0) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -117,14 +116,11 @@ const Cart = () => {
                 <span className="text-gray-600">Delivery Fee</span>
                 <span className="font-semibold text-green-600">FREE</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Taxes & Fees</span>
-                <span className="font-semibold">₹{Math.round(getTotalPrice() * 0.05)}</span>
-              </div>
+              {/* Removed Taxes & Fees line */}
               <hr />
               <div className="flex justify-between text-lg">
                 <span className="font-semibold">Total</span>
-                <span className="font-bold text-orange-600">₹{getTotalPrice() + Math.round(getTotalPrice() * 0.05)}</span>
+                <span className="font-bold text-orange-600">₹{getTotalPrice()}</span>
               </div>
             </div>
 
