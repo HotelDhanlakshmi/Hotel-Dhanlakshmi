@@ -54,6 +54,36 @@
   --royal-purple: #663399;
 }
 
+/* Prevent horizontal overflow */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Banner responsive fixes */
+.banner-container {
+  max-width: 100vw !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+
+.banner-image {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+@media (max-width: 767px) {
+  .banner-image {
+    background-size: 100% auto !important;
+    background-repeat: no-repeat !important;
+    background-position: center top !important;
+  }
+  
+  .banner-container {
+    height: auto !important;
+  }
+}
+
 /* Custom scrollbar styles */
 .scrollbar-hide {
   -ms-overflow-style: none;

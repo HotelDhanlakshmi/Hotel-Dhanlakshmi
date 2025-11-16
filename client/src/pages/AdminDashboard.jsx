@@ -420,29 +420,29 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">HD</span>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-bold text-sm sm:text-lg">HD</span>
               </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-800">Hotel Dhanlakshmi</h1>
-                <p className="text-sm text-gray-500">Admin Dashboard</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg md:text-xl font-bold text-gray-800 truncate">Hotel Dhanlakshmi</h1>
+                <p className="text-xs sm:text-sm text-gray-500 truncate">Admin Dashboard</p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <button
                 onClick={fetchData}
-                className="p-2 text-gray-500 hover:text-gray-700 transition-colors"
+                className="p-1.5 sm:p-2 text-gray-500 hover:text-gray-700 transition-colors"
                 title="Refresh"
               >
-                ↻
+                <span className="text-lg sm:text-xl">↻</span>
               </button>
               <button
                 onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
+                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm"
               >
                 Logout
               </button>
@@ -451,7 +451,7 @@ const AdminDashboard = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
@@ -506,7 +506,7 @@ const AdminDashboard = () => {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow mb-8">
           <div className="border-b border-gray-200">
-            <nav className="flex space-x-8 px-6">
+            <nav className="flex flex-wrap gap-2 sm:gap-4 md:gap-6 px-2 sm:px-4 md:px-6">
               {[
                 { id: 'overview', name: 'Overview' },
                 { id: 'orders', name: 'Orders' },
@@ -518,7 +518,7 @@ const AdminDashboard = () => {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                  className={`py-3 sm:py-4 px-2 sm:px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${activeTab === tab.id
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
@@ -529,7 +529,7 @@ const AdminDashboard = () => {
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="p-3 sm:p-4 md:p-6">
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div>
@@ -538,7 +538,9 @@ const AdminDashboard = () => {
                 {/* Recent Orders */}
                 <div className="mb-8">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">Recent Orders</h3>
-                  <div className="overflow-x-auto">
+                  
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-50">
                         <tr>
@@ -574,6 +576,37 @@ const AdminDashboard = () => {
                       </tbody>
                     </table>
                   </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-4">
+                    {orders.slice(0, 5).map((order) => (
+                      <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">Order ID</div>
+                              <div className="text-xs text-gray-600 break-all">{order.id}</div>
+                            </div>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                              {order.status}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Mobile</div>
+                            <div className="text-xs text-gray-600">{order.mobile}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Total</div>
+                            <div className="text-sm font-semibold text-green-600">₹{order.total}</div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">Time</div>
+                            <div className="text-xs text-gray-600">{new Date(order.timestamp).toLocaleString()}</div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -583,7 +616,8 @@ const AdminDashboard = () => {
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 mb-6">All Orders</h2>
 
-                <div className="overflow-x-auto">
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
@@ -626,7 +660,7 @@ const AdminDashboard = () => {
                             <select
                               value={order.status}
                               onChange={(e) => updateOrderStatus(order.id, e.target.value)}
-                              className={`text-sm border border-gray-300 rounded px-2 py-1 ${getStatusColor(order.status)}`}
+                              className={`text-sm border border-gray-300 rounded px-2 py-1 w-full ${getStatusColor(order.status)}`}
                             >
                               <option value="confirmed">Confirmed</option>
                               <option value="preparing">Preparing</option>
@@ -648,6 +682,70 @@ const AdminDashboard = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {orders.map((order) => (
+                    <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="text-xs font-medium text-gray-500">Order ID</div>
+                            <div className="text-sm font-semibold text-gray-900 break-all">{order.id}</div>
+                            <div className="text-xs text-gray-500 mt-1">{new Date(order.timestamp).toLocaleString()}</div>
+                          </div>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                            {order.status}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <div className="text-xs font-medium text-gray-500">Customer</div>
+                          <div className="text-sm font-semibold text-gray-900">{order.address.name}</div>
+                          <div className="text-xs text-gray-600">+91 {order.mobile}</div>
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-medium text-gray-500">Items</div>
+                          <div className="text-sm text-gray-900 mt-1">
+                            {order.items.map((item, index) => (
+                              <div key={index} className="mb-1">
+                                {item.name} x{item.quantity}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                          <div>
+                            <div className="text-xs font-medium text-gray-500">Total</div>
+                            <div className="text-lg font-bold text-green-600">₹{order.total}</div>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <select
+                              value={order.status}
+                              onChange={(e) => updateOrderStatus(order.id, e.target.value)}
+                              className={`text-xs border border-gray-300 rounded px-2 py-1.5 ${getStatusColor(order.status)}`}
+                            >
+                              <option value="confirmed">Confirmed</option>
+                              <option value="preparing">Preparing</option>
+                              <option value="ready">Ready</option>
+                              <option value="out-for-delivery">Out for Delivery</option>
+                              <option value="delivered">Delivered</option>
+                              <option value="cancelled">Cancelled</option>
+                            </select>
+                            <button
+                              onClick={() => alert(`Order Details:\n\nID: ${order.id}\nCustomer: ${order.address.name}\nMobile: +91 ${order.mobile}\nAddress: ${order.address.street}, ${order.address.city}\nTotal: ₹${order.total}\n\nItems:\n${order.items.map(item => `- ${item.name} x${item.quantity} = ₹${item.price * item.quantity}`).join('\n')}`)}
+                              className="text-xs text-blue-600 hover:text-blue-900 underline"
+                            >
+                              View Details
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
