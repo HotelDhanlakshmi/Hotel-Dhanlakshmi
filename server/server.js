@@ -65,6 +65,22 @@ app.use(express.urlencoded({ extended: true }));
 
 // Add this with your other routes
 app.use('/api', bannerRoutes);
+
+// Health check routes (add this after banner routes)
+app.get('/api/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Hotel Dhanlakshmi API is running',
+    timestamp: new Date().toISOString(),
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+app.get('/api/ping', (req, res) => {
+  res.json({ success: true, message: 'pong', timestamp: new Date().toISOString() });
+});
+
 // Serve static files
 app.use('/admin', express.static(path.join(__dirname, 'public')));
 
