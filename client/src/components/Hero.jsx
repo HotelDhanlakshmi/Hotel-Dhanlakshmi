@@ -85,7 +85,8 @@ const Hero = () => {
   // --- Loading State ---
   if (isLoading) {
     return (
-      <div className="relative w-full h-[70vh] md:h-[90vh] bg-gray-200 flex items-center justify-center">
+      // --- HEIGHT INCREASED ---
+      <div className="relative w-full h-[80vh] md:h-[95vh] bg-gray-200 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
       </div>
     );
@@ -94,7 +95,8 @@ const Hero = () => {
   // --- Error State ---
   if (error) {
     return (
-      <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-100 flex items-center justify-center text-red-700">
+      // --- HEIGHT INCREASED ---
+      <div className="relative w-full h-[80vh] md:h-[95vh] bg-red-100 flex items-center justify-center text-red-700">
         <p>Error: {error}</p>
       </div>
     );
@@ -103,7 +105,8 @@ const Hero = () => {
   // --- No Banners Fallback - Show default image ---
   if (bannerData.length === 0) {
     return (
-      <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-800">
+      // --- HEIGHT INCREASED ---
+      <div className="relative w-full h-[80vh] md:h-[95vh] bg-red-800">
         <div
           className="w-full h-full bg-cover bg-center bg-no-repeat"
           style={{
@@ -134,7 +137,8 @@ const Hero = () => {
   }
 
   return (
-    <div className="relative w-full h-[70vh] md:h-[90vh] bg-red-800 overflow-hidden">
+    // --- HEIGHT INCREASED ---
+    <div className="relative w-full h-[80vh] md:h-[95vh] bg-red-800 overflow-hidden">
       {/* Slides Container */}
       <div className="relative w-full h-full">
         {bannerData.map((slide, index) => (
