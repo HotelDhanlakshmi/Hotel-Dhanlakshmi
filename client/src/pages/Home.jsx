@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // <-- 1. IMPORT LINK
 import { useApp } from '../context/AppContext';
 import MenuCard from '../components/MenuCard';
 import CategoryFilter from '../components/CategoryFilter';
@@ -8,7 +9,8 @@ import BestSellersToday from '../components/BestSellersToday';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const Home = () => {
-  const { dispatch, isAuthenticated } = useApp();
+  // --- 2. GET CART FROM USEAPP ---
+  const { cart, dispatch, isAuthenticated } = useApp();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredItems, setFilteredItems] = useState([]);
@@ -25,7 +27,7 @@ const Home = () => {
           const menuData = await response.json();
           setCategories(menuData.categories || []);
           setAllMenuItems(menuData.items || []);
-          // Show first 8 items initially (will be updated by useEffect based on selectedCategory)
+          // Show first 8 items initially
           setFilteredItems((menuData.items || []).slice(0, 8));
         }
       } catch (error) {
@@ -48,8 +50,8 @@ const Home = () => {
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-
-    // Show all items when "all" category is selected, otherwise limit to 8 for specific categories
+    
+    // This logic is specific to your Home page, it's fine
     if (selectedCategory === 'all') {
       setFilteredItems(items); // Show all items
     } else {
@@ -60,6 +62,9 @@ const Home = () => {
   const handleAddToCart = (item) => {
     dispatch({ type: 'ADD_TO_CART', payload: item });
   };
+
+  // --- 3. CALCULATE TOTAL CART ITEMS ---
+  const totalCartItems = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <div className="min-h-screen">
@@ -136,6 +141,20 @@ const Home = () => {
           </div>
         )}
       </div>
+
+      {/* --- 4. ADD THE STICKY "VIEW CART" BUTTON --- */}
+      {totalCartItems > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-xs px-4">
+          <Link
+            to="/cart"
+            className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-full shadow-lg flex items-center justify-center space-x-3 transition-all duration-300 transform hover:scale-105"
+          >
+            <span>🛒</span>
+            <span>View Cart ({totalCartItems} {totalCartItems > 1 ? 'items' : 'item'})</span>
+          </Link>
+        </div>
+      )}
+      
     </div>
   );
 };
