@@ -19,10 +19,10 @@ const settingsSchema = new mongoose.Schema({
         default: ''
     },
 
-    // Order Settings
+    // Order Settings - CHANGED minOrderAmount to 0
     minOrderAmount: {
         type: Number,
-        default: 200,
+        default: 0, // CHANGED FROM 200 to 0
         min: 0
     },
     maxCODAmount: {
