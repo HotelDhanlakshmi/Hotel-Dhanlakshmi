@@ -36,6 +36,7 @@ const Menu = () => {
     fetchMenuData();
   }, []);
 
+  // Filtering logic
   useEffect(() => {
     let items = selectedCategory === 'all' 
       ? allMenuItems 
@@ -59,8 +60,10 @@ const Menu = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
-      {/* Search Bar - Not Sticky */}
-      <div className="bg-white border-b border-orange-200">
+      
+      {/* --- MODIFICATION: One single sticky container --- */}
+      <div className="sticky top-16 z-30 bg-white shadow-md border-b-2 border-orange-200">
+        {/* Search Bar */}
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
           <div className="max-w-2xl mx-auto">
             <div className="relative">
@@ -69,49 +72,47 @@ const Menu = () => {
                 placeholder="Search for delicious food..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 border-2 border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent shadow-traditional text-sm sm:text-base"
+                className="w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 border-2 border-orange-300 rounded-full focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm sm:text-base shadow-lg shadow-orange-500/20"
               />
-              <svg className="absolute left-3 sm:left-4 top-2.5 sm:top-3.5 w-5 h-5 sm:w-6 sm:h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-3 sm:left-4 top-2.5 sm:top-3.5 w-5 h-5 sm:w-6 sm:h-6 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Category Filter - Now handles its own sticky positioning */}
-      <CategoryFilter 
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
+        {/* Category Filter */}
+        {/* Make sure you have REMOVED 'sticky' from the CategoryFilter.jsx file itself */}
+        <CategoryFilter 
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+      </div>
+      {/* --- END OF STICKY CONTAINER --- */}
+
 
       {/* Menu Items */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
-        {/* --- REMOVED: Main Header (e.g., "All Items") --- */}
+        {/* --- REMOVED: All headers and banners --- */}
         
-        {/* --- MODIFICATION: Adjusted loading/filtering logic --- */}
         {loading ? (
           <div className="text-center py-16">
             <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading delicious menu items...</p>
           </div>
         ) : filteredItems.length > 0 ? (
-          <>
-            {/* --- REMOVED: "Today's Special" Banner --- */}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredItems.map((item) => (
-                <MenuCard
-                  key={item.id || item._id}
-                  item={item}
-                  onAddToCart={handleAddToCart}
-                  isAuthenticated={isAuthenticated}
-                />
-              ))}
-            </div>
-          </>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredItems.map((item) => (
+              <MenuCard
+                key={item.id || item._id}
+                item={item}
+                onAddToCart={handleAddToCart}
+                isAuthenticated={isAuthenticated}
+              />
+            ))}
+          </div>
         ) : (
           <div className="text-center py-16">
             <div className="text-6xl mb-4">🔍</div>
@@ -135,14 +136,14 @@ const Menu = () => {
         )}
       </div>
 
-      {/* --- NEW "VIEW CART" STICKY BUTTON --- */}
+      {/* --- "VIEW CART" STICKY BUTTON (UPDATED) --- */}
       {totalCartItems > 0 && (
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-xs px-4">
           <Link
             to="/cart"
             className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 px-6 rounded-full shadow-lg flex items-center justify-center space-x-3 transition-all duration-300 transform hover:scale-105"
           >
-            
+            <span>🛒</span>
             <span>View Cart ({totalCartItems} {totalCartItems > 1 ? 'items' : 'item'})</span>
           </Link>
         </div>
