@@ -100,12 +100,6 @@ const AllOrders = () => {
           <p className="text-gray-600 mb-6">{error}</p>
           <div className="space-x-4">
             <Link
-              to="/setup"
-              className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors inline-block"
-            >
-              Complete Setup
-            </Link>
-            <Link
               to="/"
               className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors inline-block"
             >

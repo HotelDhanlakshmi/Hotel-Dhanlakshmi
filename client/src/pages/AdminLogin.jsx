@@ -62,16 +62,17 @@ const AdminLogin = () => {
   };
 
   return (
-    // --- MODIFICATION: Changed background to match the rest of the site ---
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center p-4">
+    // --- MODIFICATION: Changed background to white ---
+    <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         
-        {/* --- MODIFICATION: Swapped to a cleaner card design --- */}
-        <div className="bg-white rounded-2xl shadow-2xl p-8">
+        {/* --- MODIFICATION: Professional card with border --- */}
+        <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-200">
           
           {/* Header */}
           <div className="text-center mb-8">
-            <h2 className="marathi-heading text-3xl font-bold text-orange-600">
+            {/* --- MODIFICATION: Gold text --- */}
+            <h2 className="marathi-heading text-3xl font-bold text-yellow-500">
               Hotel Dhanlakshmi
             </h2>
             <p className="text-gray-600 mt-2">
@@ -94,7 +95,6 @@ const AdminLogin = () => {
                 Mobile Number
               </label>
               <div className="relative">
-                {/* --- MODIFICATION: Added icon --- */}
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -108,8 +108,8 @@ const AdminLogin = () => {
                     setMobile(e.target.value.replace(/\D/g, '').slice(0, 10));
                     setErrors({});
                   }}
-                  // --- MODIFICATION: Added pl-10 for icon padding ---
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                  // --- MODIFICATION: Gold focus color ---
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all ${
                     errors.mobile ? 'border-red-500' : 'border-gray-200'
                   }`}
                   maxLength="10"
@@ -127,7 +127,6 @@ const AdminLogin = () => {
                 Password
               </label>
               <div className="relative">
-                {/* --- MODIFICATION: Added icon --- */}
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
@@ -141,8 +140,8 @@ const AdminLogin = () => {
                     setPassword(e.target.value);
                     setErrors({});
                   }}
-                  // --- MODIFICATION: Added pl-10 for icon padding ---
-                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-lg focus:ring-2 focus:ring-orange-500 transition-all ${
+                  // --- MODIFICATION: Gold focus color ---
+                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 transition-all ${
                     errors.password ? 'border-red-500' : 'border-gray-200'
                   }`}
                   autoComplete="current-password"
@@ -170,15 +169,15 @@ const AdminLogin = () => {
               )}
             </div>
 
-            {/* Login Button */}
+            {/* --- MODIFICATION: Gold Login Button --- */}
             <button
               type="submit"
               disabled={isLoading || !mobile || !password}
-              className="w-full maharashtrian-gradient hover:shadow-glow text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:transform-none"
+              className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:transform-none shadow-md"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-black"></div>
                   <span>Logging in...</span>
                 </div>
               ) : (
@@ -193,9 +192,10 @@ const AdminLogin = () => {
           <p className="text-gray-600 text-sm">
             Only authorized admin mobile numbers can access this panel.
           </p>
+          {/* --- MODIFICATION: Gold link --- */}
           <button
             onClick={() => navigate('/')}
-            className="text-orange-600 hover:text-orange-700 text-sm underline mt-2 font-medium"
+            className="text-yellow-500 hover:text-yellow-600 text-sm underline mt-2 font-medium"
           >
             ← Back to Website
           </button>
