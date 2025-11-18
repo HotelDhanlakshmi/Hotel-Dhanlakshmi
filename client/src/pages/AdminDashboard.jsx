@@ -33,6 +33,7 @@ const AdminDashboard = () => {
   const [settings, setSettings] = useState(null);
   const [settingsForm, setSettingsForm] = useState({});
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState('all');
   
   // Admin credentials update states
   const [showMobileModal, setShowMobileModal] = useState(false);
@@ -405,6 +406,17 @@ const AdminDashboard = () => {
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
 
+  const categoryOptions = Array.from(
+    new Set(products.map((product) => product.category).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b));
+
+  const filteredProducts =
+    categoryFilter === 'all'
+      ? products
+      : products.filter((product) => product.category === categoryFilter);
+
+  const noProductsInSelectedCategory = products.length > 0 && filteredProducts.length === 0;
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -753,18 +765,32 @@ const AdminDashboard = () => {
             {/* Products Tab */}
             {activeTab === 'products' && (
               <div>
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                   <h2 className="text-2xl font-bold text-gray-800">Products Management</h2>
-                  <button
-                    onClick={() => openProductModal()}
-                    className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all flex items-center space-x-2"
-                  >
-                    <span>+</span>
-                    <span>Add New Product</span>
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <select
+                      value={categoryFilter}
+                      onChange={(e) => setCategoryFilter(e.target.value)}
+                      className="w-full sm:w-56 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="all">All Categories</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={() => openProductModal()}
+                      className="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all flex items-center justify-center space-x-2"
+                    >
+                      <span>+</span>
+                      <span>Add New Product</span>
+                    </button>
+                  </div>
                 </div>
 
-                {products.length === 0 ? (
+                {products.length === 0 && (
                   <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
                       <span className="text-2xl text-gray-400">+</span>
@@ -778,9 +804,21 @@ const AdminDashboard = () => {
                       Add First Product
                     </button>
                   </div>
-                ) : (
+                )}
+
+                {products.length > 0 && noProductsInSelectedCategory && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <span className="text-2xl text-gray-400">⚠</span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">No Products In This Category</h3>
+                    <p className="text-gray-600">Try selecting a different category or add a new product.</p>
+                  </div>
+                )}
+
+                {products.length > 0 && !noProductsInSelectedCategory && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <div key={product.id} className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                         <div className="relative">
                           <img
