@@ -6,6 +6,24 @@ import BannerManager from './BannerManager.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+const CATEGORY_FILTER_OPTIONS = [
+  'pizza-burger',
+  'chicken',
+  'mutton',
+  'fish',
+  'rice-roti',
+  'paratha',
+  'starters',
+  'biryani',
+  'chinese-veg',
+  'chinese-non-veg',
+  'veg-main-course',
+  'tandoori-kabab',
+  'sp-thali',
+  'beverages',
+  'soups'
+];
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   // --- MODIFICATION: Set default tab to 'overview' to match your tab array
@@ -408,7 +426,10 @@ const AdminDashboard = () => {
   };
 
   const categoryOptions = Array.from(
-    new Set(products.map((product) => product.category).filter(Boolean))
+    new Set([
+      ...CATEGORY_FILTER_OPTIONS,
+      ...products.map((product) => product.category).filter(Boolean)
+    ])
   ).sort((a, b) => a.localeCompare(b));
 
   const normalizedSearch = productSearch.trim().toLowerCase();
