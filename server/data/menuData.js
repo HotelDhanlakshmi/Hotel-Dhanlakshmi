@@ -9,6 +9,7 @@ const menuData = {
     { id: 'paratha', name: 'Paratha', icon: '🫓', marathi: 'पराठा' },
     { id: 'starters', name: 'Starters', icon: '🥗', marathi: 'स्टार्टर्स' },
     { id: 'biryani', name: 'Biryani', icon: '🍛', marathi: 'बिर्याणी' },
+    { id: 'beverages', name: 'Beverages', icon: '🥤', marathi: 'पेय' },
   ],
   
   items: [
@@ -21,6 +22,12 @@ const menuData = {
     { id: 'pb6', name: 'Cheese Pizza Puff', marathiName: 'चीज पिझ्झा पफ', price: 99, category: 'pizza-burger', type: 'veg', image: 'https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=400&h=300&fit=crop' },
     { id: 'pb7', name: 'Schezwan Pizza', marathiName: 'शेजवान पिझ्झा', price: 149, category: 'pizza-burger', type: 'veg', image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop' },
     { id: 'pb8', name: 'Classic Onion', marathiName: 'क्लासिक ओनियन', price: 149, category: 'pizza-burger', type: 'veg', image: 'https://images.unsplash.com/photo-1506354666786-959d6d497f1a?w=400&h=300&fit=crop' },
+    
+    // Beverages
+    { id: 'bv1', name: 'Fresh Lime Soda', marathiName: 'फ्रेश लाइम सोडा', price: 49, category: 'beverages', type: 'veg', image: 'https://images.unsplash.com/photo-1546171753-97d7676e4602?w=400&h=300&fit=crop' },
+    { id: 'bv2', name: 'Lassi (Sweet/Salt)', marathiName: 'लस्सी (गोड/मीठी)', price: 59, category: 'beverages', type: 'veg', image: 'https://images.unsplash.com/photo-1553787499-6d7ad2b8b3e4?w=400&h=300&fit=crop' },
+    { id: 'bv3', name: 'Masala Chai', marathiName: 'मसाला चहा', price: 29, category: 'beverages', type: 'veg', image: 'https://images.unsplash.com/photo-1571934811356-5cc061b6821f?w=400&h=300&fit=crop' },
+    { id: 'bv4', name: 'Fresh Fruit Juice', marathiName: 'ताज्या फळांचा ज्यूस', price: 69, category: 'beverages', type: 'veg', image: 'https://images.unsplash.com/photo-1546171753-97d7676e4602?w=400&h=300&fit=crop' },
 
     // Chicken Items
     { id: 'ch1', name: 'Egg Curry', marathiName: 'अंडा करी', price: 119, category: 'chicken', type: 'egg', image: 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400&h=300&fit=crop' },
