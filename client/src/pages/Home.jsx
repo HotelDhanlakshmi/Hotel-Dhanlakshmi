@@ -32,8 +32,9 @@ const Home = () => {
         if (response.ok) {
           const menuData = await response.json();
           setCategories(menuData.categories || []);
-          setAllMenuItems(menuData.items || []);
-          setFilteredItems((menuData.items || []).slice(0, 8));
+          const items = menuData.items || [];
+          setAllMenuItems(items);
+          setFilteredItems(items);
         }
       } catch (error) {
         console.error('Error fetching menu:', error);
@@ -56,11 +57,7 @@ const Home = () => {
       );
     }
     
-    if (selectedCategory === 'all') {
-      setFilteredItems(items); 
-    } else {
-      setFilteredItems(items.slice(0, 8));
-    }
+    setFilteredItems(items);
   }, [selectedCategory, searchQuery, allMenuItems]);
 
   const handleAddToCart = (item) => {
