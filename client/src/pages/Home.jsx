@@ -175,7 +175,7 @@ const Home = () => {
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-xs px-4">
           <Link
             to="/cart"
-            className="w-full bg-red-500 hover:bg-red-600 text-black font-bold py-4 px-6 rounded-full shadow-lg flex items-center justify-center space-x-3 transition-all duration-300 transform hover:scale-105"
+            className="w-full bg-red-700 hover:bg-red-800 text-black font-bold py-4 px-6 rounded-full shadow-lg flex items-center justify-center space-x-3 transition-all duration-300 transform hover:scale-105"
           >
             <span>🛒</span>
             <span>View Cart ({totalCartItems} {totalCartItems > 1 ? 'items' : 'item'})</span>
