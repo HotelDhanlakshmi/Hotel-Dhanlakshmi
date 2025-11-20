@@ -92,9 +92,9 @@ const Menu = () => {
                 placeholder="Search for delicious food..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 sm:pl-12 pr-4 py-2 sm:py-3 border-2 border-green-200 rounded-full focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base shadow-lg shadow-green-500/10"
+                className="w-full pl-10 pr-4 py-2 sm:py-3 border-2 border-gray-300 bg-white rounded-full focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-sm sm:text-base text-gray-900 placeholder-gray-500 shadow-md"
               />
-              <svg className="absolute left-3 sm:left-4 top-2.5 sm:top-3.5 w-5 h-5 sm:w-6 sm:h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="absolute left-3 top-2.5 sm:top-3.5 w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
